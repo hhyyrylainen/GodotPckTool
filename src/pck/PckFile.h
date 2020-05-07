@@ -25,7 +25,7 @@ public:
         std::string Path;
         uint64_t Offset;
         uint64_t Size;
-        std::array<uint8_t, 16> MD5;
+        std::array<uint8_t, 16> MD5 = {0};
 
         std::function<std::string()> GetData;
     };
@@ -35,20 +35,42 @@ public:
 
     bool Load();
 
+    //! \brief Saves the entire pack over the Path file
     bool Save();
+
+    //! \brief Writes Contents by appending to the file. If there are duplicate paths Godot
+    //! might not like this very much
+    bool WriteUpdates();
 
     void PrintFileList(bool includeSize = true);
 
+    void AddFile(ContainedFile&& file);
+
+    void ChangePath(const std::string& path);
+
     std::string ReadContainedFileContents(uint64_t offset, uint64_t size);
+
+    inline const auto& GetPath()
+    {
+        return Path;
+    }
 
 private:
     // These need swaps on non little endian machine
     uint32_t Read32();
     uint64_t Read64();
+    void Write32(uint32_t value);
+    void Write64(uint64_t value);
 
 private:
     std::string Path;
     std::fstream File;
+    std::ifstream DataReader;
+
+    // Loaded version info from a pack
+    uint32_t MajorGodotVersion;
+    uint32_t MinorGodotVersion;
+    uint32_t PatchGodotVersion;
 
     std::map<std::string, ContainedFile> Contents;
 };
