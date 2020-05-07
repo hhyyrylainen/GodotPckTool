@@ -5,10 +5,10 @@
 #include <string>
 #include <vector>
 
-namespace packtool {
+namespace pcktool {
 
-//! \brief Main class for the Godot Pack Tool
-class PackTool {
+//! \brief Main class for the Godot Pck Tool
+class PckTool {
 public:
     struct Options {
         std::string Pack;
@@ -17,7 +17,7 @@ public:
     };
 
 public:
-    PackTool(const Options& options);
+    PckTool(const Options& options);
 
     //! \brief Runs the tool
     //! \returns The exit code to return
@@ -30,4 +30,4 @@ private:
     Options Opts;
 };
 
-} // namespace packtool
+} // namespace pcktool

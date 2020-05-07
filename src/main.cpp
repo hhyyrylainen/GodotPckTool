@@ -1,5 +1,5 @@
 #include "Define.h"
-#include "PackTool.h"
+#include "PckTool.h"
 
 #include <cxxopts.hpp>
 
@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    auto tool = packtool::PackTool({pack, action, files});
+    auto tool = pcktool::PckTool({pack, action, files});
 
     return tool.Run();
 }

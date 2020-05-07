@@ -1,7 +1,6 @@
 add_library(pck
-  pck/GodotCompatibility.h
-  pck/file_access_pack.h pck/file_access_pack.cpp
-  PackTool.h PackTool.cpp
+  pck/PckFile.h pck/PckFile.cpp
+  PckTool.h PckTool.cpp
   Include.h Define.h
   )
 

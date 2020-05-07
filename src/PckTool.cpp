@@ -1,20 +1,31 @@
 // ------------------------------------ //
-#include "PackTool.h"
+#include "PckTool.h"
+
+#include "pck/PckFile.h"
 
 #include <filesystem>
 #include <iostream>
 
-using namespace packtool;
+using namespace pcktool;
 // ------------------------------------ //
-PackTool::PackTool(const Options& options) : Opts(options) {}
+PckTool::PckTool(const Options& options) : Opts(options) {}
 // ------------------------------------ //
-int PackTool::Run()
+int PckTool::Run()
 {
     if(Opts.Action == "list") {
         if(!RequireTargetFileExists())
             return 2;
 
+        auto pck = PckFile(Opts.Pack);
+
+        if(!pck.Load()) {
+            std::cout << "ERROR: couldn't load pck file\n";
+            return 2;
+        }
+
         std::cout << "Contents of '" << Opts.Pack << "':\n";
+
+        pck.PrintFileList();
 
         std::cout << "end of contents.\n";
         return 0;
@@ -24,7 +35,7 @@ int PackTool::Run()
     return 1;
 }
 // ------------------------------------ //
-bool PackTool::RequireTargetFileExists()
+bool PckTool::RequireTargetFileExists()
 {
     if(!std::filesystem::exists(Opts.Pack)) {
         std::cout << "ERROR: specified pck file doesn't exist: " << Opts.Pack << "\n";
