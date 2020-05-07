@@ -1,4 +1,5 @@
 #include "Define.h"
+#include "PackTool.h"
 
 #include <cxxopts.hpp>
 
@@ -68,6 +69,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    std::cout << "TODO: implement this thing\n";
-    return 0;
+    auto tool = packtool::PackTool({pack, action, files});
+
+    return tool.Run();
 }
