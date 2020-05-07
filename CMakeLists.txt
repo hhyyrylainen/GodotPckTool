@@ -20,13 +20,14 @@ endif(CMAKE_BUILD_TYPE STREQUAL "")
 
 # Configure include file
 configure_file("src/Include.h.in" "${PROJECT_BINARY_DIR}/Include.h")
-# Make a readonly copy of it
-file(COPY "${PROJECT_BINARY_DIR}/Include.h" DESTINATION "src/"
-  NO_SOURCE_PERMISSIONS
-  FILE_PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
 
+include_directories(${PROJECT_BINARY_DIR})
 
 add_subdirectory(third_party)
+include_directories(third_party/cxxopts/include)
 
 include_directories(src)
 add_subdirectory(src)
+
+# Install also the license files
+install(FILES LICENSE LibraryLicenses.txt DESTINATION bin)

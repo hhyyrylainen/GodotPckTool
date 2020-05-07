@@ -10,6 +10,8 @@ Required libraries
 sudo dnf install cmake gcc-c++ libstdc++-static mingw32-gcc-c++ mingw32-winpthreads-static
 ```
 
+Also don't forget to init git submodules.
+
 Then just
 ```sh
 make
