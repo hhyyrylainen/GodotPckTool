@@ -1,0 +1,32 @@
+# Cross-compilable Godot .pck standalone extractor and packer
+cmake_minimum_required(VERSION 3.10)
+
+project(GodotPckTool)
+
+set(GODOT_PCK_TOOL_VERSION_MAJOR 1)
+set(GODOT_PCK_TOOL_VERSION_MINOR 0)
+
+set(GODOT_PCK_TOOL_VERSION_STR "${GODOT_PCK_TOOL_VERSION_MAJOR}.${GODOT_PCK_TOOL_VERSION_MINOR}")
+
+# set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake")
+SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+SET(BUILD_SHARED_LIBS OFF)
+
+# Common options
+if(CMAKE_BUILD_TYPE STREQUAL "")
+  set(CMAKE_BUILD_TYPE Release CACHE STRING
+    "Set the build type, usually Release or RelWithDebInfo" FORCE)
+endif(CMAKE_BUILD_TYPE STREQUAL "")
+
+# Configure include file
+configure_file("src/Include.h.in" "${PROJECT_BINARY_DIR}/Include.h")
+# Make a readonly copy of it
+file(COPY "${PROJECT_BINARY_DIR}/Include.h" DESTINATION "src/"
+  NO_SOURCE_PERMISSIONS
+  FILE_PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
+
+
+add_subdirectory(third_party)
+
+include_directories(src)
+add_subdirectory(src)
