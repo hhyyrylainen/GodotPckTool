@@ -44,9 +44,8 @@ public:
     //! \brief Saves the entire pack over the Path file
     bool Save();
 
-    //! \brief Writes Contents by appending to the file. If there are duplicate paths Godot
-    //! might not like this very much
-    bool WriteUpdates();
+    //! \brief Extracts the read contents to the outputPrefix
+    bool Extract(const std::string& outputPrefix);
 
     void PrintFileList(bool includeSize = true);
 

@@ -56,7 +56,12 @@ int PckTool::Run()
         if(!pck)
             return 2;
 
-        std::cout << "TODO: extract\n";
+        std::cout << "Extracting to: " << Opts.Output << "\n";
+
+        if(!pck->Extract(Opts.Output)) {
+            std::cout << "ERROR: extraction failed\n";
+            return 2;
+        }
 
         return 0;
     } else if(Opts.Action == "add" || Opts.Action == "a") {

@@ -198,6 +198,56 @@ void PckFile::ChangePath(const std::string& path)
     Path = path;
 }
 // ------------------------------------ //
+bool PckFile::Extract(const std::string& outputPrefix)
+{
+    const auto outputBase = std::filesystem::path(outputPrefix);
+
+    for(const auto& [path, entry] : Contents) {
+        std::string processedPath = path.find(GODOT_RES_PATH) == 0 ?
+                                        path.substr(std::string_view(GODOT_RES_PATH).size()) :
+                                        path;
+
+        // Remove any starting slashes
+        while(processedPath.size() > 0 && processedPath.front() == '/')
+            processedPath.erase(processedPath.begin());
+
+        const auto fsPath = std::filesystem::path(processedPath);
+
+        const auto filename = fsPath.filename();
+        const auto baseFolder = fsPath.parent_path();
+
+        const auto targetFolder = outputBase / baseFolder;
+        const auto targetFile = targetFolder / filename;
+
+        std::cout << "Extracting " << path << " to " << targetFile << "\n";
+        try {
+            std::filesystem::create_directories(targetFolder);
+        } catch(const std::filesystem::filesystem_error& e) {
+            std::cout << "ERROR: creating target directory (" << targetFolder
+                      << "): " << e.what() << "\n";
+            return false;
+        }
+
+        std::ofstream writer(targetFile.string(), std::ios::trunc | std::ios::out);
+
+        if(!writer.good()) {
+            std::cout << "ERROR: opening file for writing: " << targetFile << "\n";
+            return false;
+        }
+
+        const auto data = entry.GetData();
+
+        writer.write(data.data(), data.size());
+
+        if(!writer.good()) {
+            std::cout << "ERROR: writing failure to file\n";
+            return false;
+        }
+    }
+
+    return true;
+}
+// ------------------------------------ //
 void PckFile::PrintFileList(bool includeSize /*= true*/)
 {
     for(const auto& [path, entry] : Contents) {
