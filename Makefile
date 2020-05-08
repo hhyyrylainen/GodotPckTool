@@ -9,6 +9,9 @@ build:
 cmake: build
 	cd build && cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
+cmake-debug: build
+	cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug
+
 compile: cmake
 	$(MAKE) -C build
 

@@ -6,6 +6,7 @@
 #include <fstream>
 #include <functional>
 #include <map>
+#include <optional>
 #include <string>
 
 namespace pcktool {
@@ -32,6 +33,11 @@ public:
 
 public:
     PckFile(const std::string& path);
+    PckFile(PckFile&& other) = delete;
+    PckFile(const PckFile& other) = delete;
+
+    PckFile& operator=(PckFile&& other) = delete;
+    PckFile& operator=(const PckFile& other) = delete;
 
     bool Load();
 
@@ -64,8 +70,8 @@ private:
 
 private:
     std::string Path;
-    std::fstream File;
-    std::ifstream DataReader;
+    std::optional<std::fstream> File;
+    std::optional<std::ifstream> DataReader;
 
     // Loaded version info from a pack
     uint32_t MajorGodotVersion;

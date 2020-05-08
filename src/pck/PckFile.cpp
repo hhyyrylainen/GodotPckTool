@@ -12,17 +12,20 @@ bool PckFile::Load()
 {
     Contents.clear();
 
-    File.open(Path, std::ios::in);
+    File = std::fstream(Path, std::ios::in);
 
-    if(!File.good()) {
+    if(!File->good()) {
         std::cout << "ERROR: file is unreadable: " << Path << "\n";
         return false;
     }
 
-    File.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    File->exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
     // Separate reader to make writing work
-    DataReader.open(Path, std::ios::in);
+    DataReader = std::ifstream(Path, std::ios::in);
+
+    if(!DataReader.has_value() || !DataReader)
+        throw std::runtime_error("second data reader opening failed");
 
     uint32_t magic = Read32();
 
@@ -59,12 +62,12 @@ bool PckFile::Load()
 
         entry.Path.resize(pathLength);
 
-        File.read(entry.Path.data(), pathLength);
+        File->read(entry.Path.data(), pathLength);
 
         entry.Offset = Read64();
         entry.Size = Read64();
 
-        File.read(reinterpret_cast<char*>(entry.MD5.data()), sizeof(entry.MD5));
+        File->read(reinterpret_cast<char*>(entry.MD5.data()), sizeof(entry.MD5));
 
         entry.GetData = [offset = entry.Offset, size = entry.Size, this]() {
             return ReadContainedFileContents(offset, size);
@@ -73,7 +76,8 @@ bool PckFile::Load()
         Contents[entry.Path] = std::move(entry);
     };
 
-    File.close();
+    File->close();
+    File.reset();
     return true;
 }
 // ------------------------------------ //
@@ -81,14 +85,14 @@ bool PckFile::Save()
 {
     const auto tmpWrite = Path + ".write";
 
-    File.open(tmpWrite, std::ios::trunc | std::ios::out);
+    File = std::fstream(tmpWrite, std::ios::trunc | std::ios::out);
 
-    if(!File.good()) {
+    if(!File->good()) {
         std::cout << "ERROR: file is unwriteable: " << tmpWrite << "\n";
         return false;
     }
 
-    File.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    File->exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
     // Header
 
@@ -115,30 +119,31 @@ bool PckFile::Save()
     for(const auto& [_, entry] : Contents) {
 
         Write32(entry.Path.size());
-        File.write(entry.Path.data(), entry.Path.size());
+        File->write(entry.Path.data(), entry.Path.size());
 
-        continueWriteIndex[&entry] = File.tellg();
+        continueWriteIndex[&entry] = File->tellg();
         // No offset yet
         Write64(0);
         Write64(entry.Size);
 
         // MD5 is not calculated yet, so this writes garbage but this will be fixed later
         // Apparently this is not needed at all as the godot packer never calculates the md5
-        File.write(reinterpret_cast<const char*>(entry.MD5.data()), sizeof(entry.MD5));
+        File->write(reinterpret_cast<const char*>(entry.MD5.data()), sizeof(entry.MD5));
     }
 
     // Align
-    // Has to be at least 4 when used
     int alignment = 0;
 
     if(alignment >= 4) {
-        while(File.tellg() % alignment != 0)
-            Write32(0);
+        while(File->tellg() % alignment != 0) {
+            uint8_t null = 0;
+            File->write(reinterpret_cast<const char*>(&null), sizeof(null));
+        }
     }
 
     // Then write the data
     for(auto& [_, entry] : Contents) {
-        uint64_t offset = File.tellg();
+        uint64_t offset = File->tellg();
 
         // Write the data here
         // NOTE: the godot packer only writes like 50k bytes at once, but we load the whole
@@ -151,7 +156,7 @@ bool PckFile::Save()
             return false;
         }
 
-        File.write(data.data(), entry.Size);
+        File->write(data.data(), entry.Size);
 
         // Update the entry offset for writing
         entry.Offset = offset;
@@ -160,17 +165,21 @@ bool PckFile::Save()
 
     // And finally fix up the files
     for(const auto& [_, entry] : Contents) {
-        File.seekg(continueWriteIndex[&entry]);
+        File->seekg(continueWriteIndex[&entry]);
         Write64(entry.Offset);
 
         // MD5 is not calculated so no need to write that here
     }
 
-    File.close();
-    if(DataReader.is_open())
-        DataReader.close();
+    File->close();
+    File.reset();
+    DataReader.reset();
 
-    std::filesystem::remove(Path);
+    try {
+        std::filesystem::remove(Path);
+    } catch(const std::filesystem::filesystem_error&) {
+    }
+
     std::filesystem::rename(tmpWrite, Path);
     return true;
 }
@@ -182,8 +191,10 @@ void PckFile::AddFile(ContainedFile&& file)
 
 void PckFile::ChangePath(const std::string& path)
 {
-    if(File.is_open())
-        File.close();
+    File.reset();
+    // Actually needed for reading previous data
+    // DataReader.reset();
+
     Path = path;
 }
 // ------------------------------------ //
@@ -200,16 +211,17 @@ void PckFile::PrintFileList(bool includeSize /*= true*/)
 // ------------------------------------ //
 std::string PckFile::ReadContainedFileContents(uint64_t offset, uint64_t size)
 {
-    if(!DataReader.is_open())
-        DataReader.open(Path, std::ios::in);
+    if(!DataReader) {
+        throw std::runtime_error("Data reader is no longer open to read file contents");
+    }
 
     std::string result;
     result.resize(size);
 
-    DataReader.seekg(offset);
-    DataReader.read(result.data(), size);
+    DataReader->seekg(offset);
+    DataReader->read(result.data(), size);
 
-    if(!DataReader.good())
+    if(!DataReader->good())
         throw std::runtime_error("files for entry contents failed");
 
     return result;
@@ -219,7 +231,7 @@ uint32_t PckFile::Read32()
 {
     uint32_t value;
 
-    File.read(reinterpret_cast<char*>(&value), sizeof(value));
+    File->read(reinterpret_cast<char*>(&value), sizeof(value));
     return value;
 }
 
@@ -227,16 +239,16 @@ uint64_t PckFile::Read64()
 {
     uint64_t value;
 
-    File.read(reinterpret_cast<char*>(&value), sizeof(value));
+    File->read(reinterpret_cast<char*>(&value), sizeof(value));
     return value;
 }
 
 void PckFile::Write32(uint32_t value)
 {
-    File.write(reinterpret_cast<char*>(&value), sizeof(value));
+    File->write(reinterpret_cast<char*>(&value), sizeof(value));
 }
 
 void PckFile::Write64(uint64_t value)
 {
-    File.write(reinterpret_cast<char*>(&value), sizeof(value));
+    File->write(reinterpret_cast<char*>(&value), sizeof(value));
 }

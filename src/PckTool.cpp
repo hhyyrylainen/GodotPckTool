@@ -12,35 +12,25 @@ PckTool::PckTool(const Options& options) : Opts(options) {}
 // ------------------------------------ //
 int PckTool::Run()
 {
-    if(Opts.Action == "list") {
-        if(!RequireTargetFileExists())
-            return 2;
+    if(Opts.Action == "list" || Opts.Action == "l") {
+        auto pck = LoadPck();
 
-        auto pck = PckFile(Opts.Pack);
-
-        if(!pck.Load()) {
-            std::cout << "ERROR: couldn't load pck file\n";
+        if(!pck)
             return 2;
-        }
 
         std::cout << "Contents of '" << Opts.Pack << "':\n";
 
-        pck.PrintFileList();
+        pck->PrintFileList();
 
         std::cout << "end of contents.\n";
         return 0;
-    } else if(Opts.Action == "repack") {
+    } else if(Opts.Action == "repack" || Opts.Action == "r") {
         // This action just reads the pck and writes it out again over the file (if no other
         // files are specified)
-        if(!RequireTargetFileExists())
-            return 2;
+        auto pck = LoadPck();
 
-        auto pck = PckFile(Opts.Pack);
-
-        if(!pck.Load()) {
-            std::cout << "ERROR: couldn't load pck file\n";
+        if(!pck)
             return 2;
-        }
 
         if(!Opts.Files.empty()) {
             if(Opts.Files.size() != 1) {
@@ -48,17 +38,29 @@ int PckTool::Run()
                 return 1;
             }
 
-            pck.ChangePath(Opts.Files.front());
+            pck->ChangePath(Opts.Files.front());
         }
 
-        std::cout << "Repacking to: " << pck.GetPath() << "\n";
+        std::cout << "Repacking to: " << pck->GetPath() << "\n";
 
-        if(!pck.Save()) {
+        if(!pck->Save()) {
             std::cout << "Failed to repack\n";
             return 2;
         }
 
         std::cout << "Repack complete\n";
+        return 0;
+    } else if(Opts.Action == "extract" || Opts.Action == "e") {
+        auto pck = LoadPck();
+
+        if(!pck)
+            return 2;
+
+        std::cout << "TODO: extract\n";
+
+        return 0;
+    } else if(Opts.Action == "add" || Opts.Action == "a") {
+        std::cout << "TODO: add\n";
         return 0;
     }
 
@@ -74,4 +76,19 @@ bool PckTool::RequireTargetFileExists()
     }
 
     return true;
+}
+
+std::unique_ptr<PckFile> PckTool::LoadPck()
+{
+    if(!RequireTargetFileExists())
+        return nullptr;
+
+    auto pck = std::make_unique<PckFile>(Opts.Pack);
+
+    if(!pck->Load()) {
+        std::cout << "ERROR: couldn't load pck file: " << pck->GetPath() << "\n";
+        return nullptr;
+    }
+
+    return pck;
 }

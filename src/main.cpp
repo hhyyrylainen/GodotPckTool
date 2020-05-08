@@ -6,6 +6,19 @@
 #include <iostream>
 #include <string>
 
+constexpr auto MAX_ACTION_NAME_LENGTH = 27;
+
+void PrintActionLine(const std::string_view firstPart, const std::string_view descriptionPart)
+{
+    std::cout << "  " << firstPart;
+
+    int padding = MAX_ACTION_NAME_LENGTH - firstPart.size() - 2;
+
+    for(int i = 0; i < padding; ++i)
+        std::cout << " ";
+
+    std::cout << descriptionPart << "\n";
+}
 
 int main(int argc, char* argv[])
 {
@@ -17,6 +30,9 @@ int main(int argc, char* argv[])
         ("a,action", "Action to perform", cxxopts::value<std::string>()->default_value("list"))
         ("f,file", "Files to perform the action on",
             cxxopts::value<std::vector<std::string>>())
+        ("o,output", "Target folder for extracting", cxxopts::value<std::string>())
+        ("remove-prefix", "Remove a prefix from files added to a pck",
+            cxxopts::value<std::string>())
         ("v,version", "Print version and quit")
         ("h,help", "Print help and quit")
         ;
@@ -36,15 +52,31 @@ int main(int argc, char* argv[])
 
     if(result.count("help")) {
         std::cout << options.help();
+        std::cout << "Available actions (brackets denote shorthand):\n";
+
+        PrintActionLine("[l]ist", "List contents of a pck file");
+        PrintActionLine("[e]xtract", "Extract the contents of a pck");
+        PrintActionLine("[a]dd", "Add files to a new or existing pck");
+        PrintActionLine("[r]epack", "Repack an existing pack, optionally to a different file");
         return 0;
     }
 
     std::string pack;
     std::string action;
     std::vector<std::string> files;
+    std::string output;
+    std::string removePrefix;
 
     if(result.count("file")) {
         files = result["file"].as<decltype(files)>();
+    }
+
+    if(result.count("output")) {
+        output = result["output"].as<std::string>();
+    }
+
+    if(result.count("removePrefix")) {
+        removePrefix = result["remove-prefix"].as<std::string>();
     }
 
     if(result.count("pack") < 1) {
@@ -69,7 +101,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    auto tool = pcktool::PckTool({pack, action, files});
+    auto tool = pcktool::PckTool({pack, action, files, output, removePrefix});
 
     return tool.Run();
 }
