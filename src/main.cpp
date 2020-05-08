@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
         output = result["output"].as<std::string>();
     }
 
-    if(result.count("removePrefix")) {
+    if(result.count("remove-prefix")) {
         removePrefix = result["remove-prefix"].as<std::string>();
     }
 

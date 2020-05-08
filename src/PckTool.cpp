@@ -65,7 +65,40 @@ int PckTool::Run()
 
         return 0;
     } else if(Opts.Action == "add" || Opts.Action == "a") {
-        std::cout << "TODO: add\n";
+        std::unique_ptr<PckFile> pck;
+
+        if(Opts.Files.empty()) {
+            std::cout << "ERROR: no files specified\n";
+            return 1;
+        }
+
+        if(TargetExists()) {
+            std::cout << "Target pck exists, loading it before adding new files\n";
+
+            pck = LoadPck();
+
+            if(!pck) {
+                std::cout << "ERROR: couldn't load existing target pck. Please change the "
+                             "target or delete the existing file.\n";
+                return 2;
+            }
+        } else {
+            pck = std::make_unique<PckFile>(Opts.Pack);
+        }
+
+        for(const auto& entry : Opts.Files) {
+            if(!pck->AddFilesFromFilesystem(entry, Opts.RemovePrefix)) {
+                std::cout << "ERROR: failed to process file to add: " << entry << "\n";
+                return 3;
+            }
+        }
+
+        if(!pck->Save()) {
+            std::cout << "Failed to save pck\n";
+            return 2;
+        }
+
+        std::cout << "Writing / updating pck finished\n";
         return 0;
     }
 
@@ -73,9 +106,14 @@ int PckTool::Run()
     return 1;
 }
 // ------------------------------------ //
+bool PckTool::TargetExists()
+{
+    return std::filesystem::exists(Opts.Pack);
+}
+
 bool PckTool::RequireTargetFileExists()
 {
-    if(!std::filesystem::exists(Opts.Pack)) {
+    if(!TargetExists()) {
         std::cout << "ERROR: specified pck file doesn't exist: " << Opts.Pack << "\n";
         return false;
     }

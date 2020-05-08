@@ -34,6 +34,8 @@ public:
     int Run();
 
 private:
+    bool TargetExists();
+
     bool RequireTargetFileExists();
 
     std::unique_ptr<PckFile> LoadPck();

@@ -188,7 +188,78 @@ void PckFile::AddFile(ContainedFile&& file)
 {
     Contents[file.Path] = std::move(file);
 }
+// ------------------------------------ //
+bool PckFile::AddFilesFromFilesystem(const std::string& path, const std::string& stripPrefix)
+{
+    if(!std::filesystem::exists(path)) {
+        return false;
+    }
 
+    if(!std::filesystem::is_directory(path)) {
+        // Just a single file
+        AddSingleFile(path, PreparePckPath(path, stripPrefix));
+        return true;
+    }
+
+    for(const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
+        if(entry.is_directory())
+            continue;
+
+        const std::string entryPath = entry.path().string();
+
+        AddSingleFile(entryPath, PreparePckPath(entryPath, stripPrefix));
+    }
+
+    return true;
+}
+
+void PckFile::AddSingleFile(const std::string& filesystemPath, const std::string& pckPath)
+{
+    std::cout << "Adding " << filesystemPath << " as " << pckPath << "\n";
+
+    ContainedFile file;
+
+    const auto size = std::filesystem::file_size(filesystemPath);
+
+    file.Path = pckPath;
+    file.Offset = -1;
+    file.Size = size;
+
+    // Seems like Godot pcks don't currently use hashes, so we don't need to do this
+    // file.MD5 = {0};
+
+    file.GetData = [filesystemPath, size]() {
+        std::ifstream reader(filesystemPath, std::ios::in);
+
+        if(!reader.good()) {
+            std::cout << "ERROR: opening for reading: " << filesystemPath << "\n";
+            throw std::runtime_error("can't read source file");
+        }
+
+        std::string data;
+        data.resize(size);
+
+        reader.read(data.data(), size);
+
+        return data;
+    };
+
+    Contents[pckPath] = file;
+}
+
+std::string PckFile::PreparePckPath(std::string path, const std::string& stripPrefix)
+{
+    if(stripPrefix.size() > 0 && path.find(stripPrefix) == 0) {
+        path = path.substr(stripPrefix.size());
+    }
+
+    while(path.size() > 0 && path.front() == '/') {
+        path.erase(path.begin());
+    }
+
+    return GODOT_RES_PATH + path;
+}
+// ------------------------------------ //
 void PckFile::ChangePath(const std::string& path)
 {
     File.reset();
