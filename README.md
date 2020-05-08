@@ -6,7 +6,73 @@ A standalone executable for unpacking and packing Godot .pck files.
 Command line usage
 ------------------
 
-TODO: write documentation on command line usage
+For these you just need the GodotPckTool executable. Available from the releases page.
+
+Note: if you don't install it on Linux you need to either use the full
+path or put it in a folder and run it as `./godotpcktool` similarly to
+Windows.
+
+You can view the tool help by running `godotpcktool -h`
+
+### Listing contents
+
+Lists the files inside a pck file.
+
+```sh
+godotpcktool Thrive.pck
+```
+
+Long form:
+
+```sh
+godotpcktool --pack Thrive.pck --action list
+```
+
+### Extracting contents
+
+Extracts the contents of a pck file.
+
+```sh
+godotpcktool Thrive.pck -a e -o extracted
+```
+
+Long form:
+
+```sh
+godotpcktool --pack Thrive.pck --action extract --output extracted
+```
+
+### Adding content
+
+Adds content to an existing pck or creates a new pck. When creating a
+new pck you can specify which Godot version the pck file says it is
+packed with using the flag `set-godot-version`.
+
+```sh
+godotpcktool Thrive.pck -a a extracted --remove-prefix extracted
+```
+
+Long form:
+
+```sh
+godotpcktool --pack Thrive.pck --action add --remove-prefix extracted --file extracted
+```
+
+### General info
+
+In the long form multiple files may be included like this:
+```sh
+godotpcktool ... --file firstfile,secondfile
+```
+
+Make sure to use quoting if your files contain spaces, otherwise the
+files will be interpreted as other options.
+
+In the short form the files can just be listed after the other
+commands. If your file begins with a `-` you can prevent it from being
+interpreted as a parameter by adding `--` between the parameters and
+the list of files.
+
 
 Building
 --------
