@@ -2,16 +2,25 @@
 
 #include "Define.h"
 
+#include <nlohmann/json.hpp>
+
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace pcktool {
 
+using json = nlohmann::json;
+
 class PckFile;
 
 //! \brief Main class for the Godot Pck Tool
 class PckTool {
+    struct FileEntry {
+        std::string InputFile;
+        std::string Target;
+    };
+
 public:
     struct Options {
         std::string Pack;
@@ -24,6 +33,8 @@ public:
         int GodotMajor;
         int GodotMinor;
         int GodotPatch;
+
+        json FileCommands;
     };
 
 public:
@@ -34,6 +45,8 @@ public:
     int Run();
 
 private:
+    bool BuildFileList();
+
     bool TargetExists();
 
     bool RequireTargetFileExists();
@@ -42,6 +55,8 @@ private:
 
 private:
     Options Opts;
+
+    std::vector<FileEntry> Files;
 };
 
 } // namespace pcktool

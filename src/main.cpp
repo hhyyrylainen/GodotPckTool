@@ -84,6 +84,7 @@ int main(int argc, char* argv[])
     std::string output;
     std::string removePrefix;
     int godotMajor, godotMinor, godotPatch;
+    nlohmann::json fileCommands;
 
     if(result.count("file")) {
         files = result["file"].as<decltype(files)>();
@@ -97,27 +98,11 @@ int main(int argc, char* argv[])
         removePrefix = result["remove-prefix"].as<std::string>();
     }
 
-    if(result.count("pack") < 1) {
-        // Use first file as the pack file
-        if(files.empty()) {
-            std::cout << "ERROR: No pck file or list of files given\n";
-            return 1;
-        }
-
-        // User first file as the pck file
-        pack = files.front();
-        files.erase(files.begin());
-
-    } else {
+    if(result.count("pack")) {
         pack = result["pack"].as<std::string>();
     }
 
     action = result["action"].as<std::string>();
-
-    if(pack.find(pcktool::GODOT_PCK_EXTENSION) == std::string::npos) {
-        std::cout << "ERROR: Given pck file doesn't contain the pck file extension\n";
-        return 1;
-    }
 
     try {
         std::tie(godotMajor, godotMinor, godotPatch) =
@@ -127,8 +112,39 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    auto tool = pcktool::PckTool(
-        {pack, action, files, output, removePrefix, godotMajor, godotMinor, godotPatch});
+    bool alreadyRead = false;
+
+    // Stdin json commands
+    for(auto iter = files.begin(); iter != files.end();) {
+        if(*iter != "-" || alreadyRead) {
+            ++iter;
+            continue;
+        }
+
+        alreadyRead = true;
+        iter = files.erase(iter);
+
+        std::cout << "Reading JSON file commands from STDIN until EOF...\n";
+
+        std::string data;
+
+        std::string line;
+        while(std::getline(std::cin, line)) {
+            data += line;
+        }
+
+        std::cout << "Finished reading STDIN (total characters: " << data.size() << ").\n";
+
+        try {
+            fileCommands = nlohmann::json::parse(data);
+        } catch(const nlohmann::json::parse_error& e) {
+            std::cout << "ERROR: invalid json: " << e.what() << "\n";
+            return 1;
+        }
+    }
+
+    auto tool = pcktool::PckTool({pack, action, files, output, removePrefix, godotMajor,
+        godotMinor, godotPatch, fileCommands});
 
     return tool.Run();
 }

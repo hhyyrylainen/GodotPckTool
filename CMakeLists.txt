@@ -25,6 +25,7 @@ include_directories(${PROJECT_BINARY_DIR})
 
 add_subdirectory(third_party)
 include_directories(third_party/cxxopts/include)
+include_directories(third_party/json/single_include)
 
 include_directories(src)
 add_subdirectory(src)

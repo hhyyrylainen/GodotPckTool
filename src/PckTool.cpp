@@ -12,6 +12,9 @@ PckTool::PckTool(const Options& options) : Opts(options) {}
 // ------------------------------------ //
 int PckTool::Run()
 {
+    if(!BuildFileList())
+        return 1;
+
     if(Opts.Action == "list" || Opts.Action == "l") {
         auto pck = LoadPck();
 
@@ -32,13 +35,13 @@ int PckTool::Run()
         if(!pck)
             return 2;
 
-        if(!Opts.Files.empty()) {
-            if(Opts.Files.size() != 1) {
+        if(!Files.empty()) {
+            if(Files.size() != 1) {
                 std::cout << "ERROR: only one target file to repack as is allowed\n";
                 return 1;
             }
 
-            pck->ChangePath(Opts.Files.front());
+            pck->ChangePath(Files.front().InputFile);
         }
 
         std::cout << "Repacking to: " << pck->GetPath() << "\n";
@@ -67,7 +70,7 @@ int PckTool::Run()
     } else if(Opts.Action == "add" || Opts.Action == "a") {
         std::unique_ptr<PckFile> pck;
 
-        if(Opts.Files.empty()) {
+        if(Files.empty()) {
             std::cout << "ERROR: no files specified\n";
             return 1;
         }
@@ -84,12 +87,21 @@ int PckTool::Run()
             }
         } else {
             pck = std::make_unique<PckFile>(Opts.Pack);
+
+            pck->SetGodotVersion(Opts.GodotMajor, Opts.GodotMinor, Opts.GodotPatch);
         }
 
-        for(const auto& entry : Opts.Files) {
-            if(!pck->AddFilesFromFilesystem(entry, Opts.RemovePrefix)) {
-                std::cout << "ERROR: failed to process file to add: " << entry << "\n";
-                return 3;
+        for(const auto& entry : Files) {
+            if(!entry.Target.empty()) {
+                // Already known target for a single file
+                pck->AddSingleFile(entry.InputFile, pck->PreparePckPath(entry.Target, ""));
+            } else {
+                // Potentially a folder tree with no pre-defined targets
+                if(!pck->AddFilesFromFilesystem(entry.InputFile, Opts.RemovePrefix)) {
+                    std::cout << "ERROR: failed to process file to add: " << entry.InputFile
+                              << "\n";
+                    return 3;
+                }
             }
         }
 
@@ -134,4 +146,37 @@ std::unique_ptr<PckFile> PckTool::LoadPck()
     }
 
     return pck;
+}
+// ------------------------------------ //
+bool PckTool::BuildFileList()
+{
+    // Copy standard files
+    for(const auto& entry : Opts.Files)
+        Files.push_back({entry});
+
+    // Handle json commands
+    if(Opts.FileCommands.is_array()) {
+        for(const auto& entry : Opts.FileCommands) {
+            Files.push_back(
+                {entry["file"].get<std::string>(), entry["target"].get<std::string>()});
+        }
+    }
+
+    // Use first file as the pck if pck is missing
+    if(Opts.Pack.empty()) {
+        if(Files.empty()) {
+            std::cout << "ERROR: No pck file or list of files given\n";
+            return false;
+        }
+
+        // User first file as the pck file
+        Opts.Pack = Files.front().InputFile;
+        Files.erase(Files.begin());
+    }
+
+    if(Opts.Pack.find(pcktool::GODOT_PCK_EXTENSION) == std::string::npos) {
+        std::cout << "WARNING: Given pck file doesn't contain the pck file extension\n";
+    }
+
+    return true;
 }
