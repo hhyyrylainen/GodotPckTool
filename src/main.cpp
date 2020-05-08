@@ -32,7 +32,7 @@ std::tuple<int, int, int> ParseGodotVersion(const std::string& version)
         throw std::runtime_error("invalid version format, expected format: x.y.z");
 
     return std::make_tuple(
-        std::stoi(matches[0]), std::stoi(matches[1]), std::stoi(matches[2]));
+        std::stoi(matches[1]), std::stoi(matches[2]), std::stoi(matches[3]));
 }
 
 int main(int argc, char* argv[])
