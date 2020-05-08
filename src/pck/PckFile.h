@@ -55,6 +55,13 @@ public:
 
     std::string ReadContainedFileContents(uint64_t offset, uint64_t size);
 
+    void SetGodotVersion(uint32_t major, uint32_t minor, uint32_t patch)
+    {
+        MajorGodotVersion = major;
+        MinorGodotVersion = minor;
+        PatchGodotVersion = patch;
+    }
+
     inline const auto& GetPath()
     {
         return Path;
@@ -73,9 +80,9 @@ private:
     std::optional<std::ifstream> DataReader;
 
     // Loaded version info from a pack
-    uint32_t MajorGodotVersion;
-    uint32_t MinorGodotVersion;
-    uint32_t PatchGodotVersion;
+    uint32_t MajorGodotVersion = 0;
+    uint32_t MinorGodotVersion = 0;
+    uint32_t PatchGodotVersion = 0;
 
     std::map<std::string, ContainedFile> Contents;
 };

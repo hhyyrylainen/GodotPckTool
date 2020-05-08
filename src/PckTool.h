@@ -19,6 +19,11 @@ public:
         std::vector<std::string> Files;
         std::string Output;
         std::string RemovePrefix;
+
+        // Godot version to set in pck
+        int GodotMajor;
+        int GodotMinor;
+        int GodotPatch;
     };
 
 public:

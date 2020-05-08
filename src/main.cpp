@@ -4,7 +4,9 @@
 #include <cxxopts.hpp>
 
 #include <iostream>
+#include <regex>
 #include <string>
+#include <tuple>
 
 constexpr auto MAX_ACTION_NAME_LENGTH = 27;
 
@@ -20,6 +22,19 @@ void PrintActionLine(const std::string_view firstPart, const std::string_view de
     std::cout << descriptionPart << "\n";
 }
 
+std::tuple<int, int, int> ParseGodotVersion(const std::string& version)
+{
+    const auto versionFormat = std::regex(R"((\d+)\.(\d+)\.(\d+))");
+
+    std::smatch matches;
+
+    if(!std::regex_match(version, matches, versionFormat))
+        throw std::runtime_error("invalid version format, expected format: x.y.z");
+
+    return std::make_tuple(
+        std::stoi(matches[0]), std::stoi(matches[1]), std::stoi(matches[2]));
+}
+
 int main(int argc, char* argv[])
 {
     cxxopts::Options options("godotpcktool", "Godot .pck file extractor and packer");
@@ -33,6 +48,8 @@ int main(int argc, char* argv[])
         ("o,output", "Target folder for extracting", cxxopts::value<std::string>())
         ("remove-prefix", "Remove a prefix from files added to a pck",
             cxxopts::value<std::string>())
+        ("set-godot-version", "Set the godot version to use when creating a new pck",
+            cxxopts::value<std::string>()->default_value("3.0.0"))
         ("v,version", "Print version and quit")
         ("h,help", "Print help and quit")
         ;
@@ -66,6 +83,7 @@ int main(int argc, char* argv[])
     std::vector<std::string> files;
     std::string output;
     std::string removePrefix;
+    int godotMajor, godotMinor, godotPatch;
 
     if(result.count("file")) {
         files = result["file"].as<decltype(files)>();
@@ -101,7 +119,16 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    auto tool = pcktool::PckTool({pack, action, files, output, removePrefix});
+    try {
+        std::tie(godotMajor, godotMinor, godotPatch) =
+            ParseGodotVersion(result["set-godot-version"].as<std::string>());
+    } catch(const std::exception& e) {
+        std::cout << "ERROR: specified version number is invalid: " << e.what() << "\n";
+        return 1;
+    }
+
+    auto tool = pcktool::PckTool(
+        {pack, action, files, output, removePrefix, godotMajor, godotMinor, godotPatch});
 
     return tool.Run();
 }
