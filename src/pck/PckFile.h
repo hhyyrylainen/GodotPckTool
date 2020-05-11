@@ -54,8 +54,9 @@ public:
     //! \brief Adds recursively files from path to this pck
     bool AddFilesFromFilesystem(const std::string& path, const std::string& stripPrefix);
 
-    void AddSingleFile(const std::string& filesystemPath, const std::string& pckPath);
+    void AddSingleFile(const std::string& filesystemPath, std::string pckPath);
 
+    //! \note Automatically converts \'s in the path to /'s
     std::string PreparePckPath(std::string path, const std::string& stripPrefix);
 
     void ChangePath(const std::string& path);

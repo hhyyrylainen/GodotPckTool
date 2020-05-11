@@ -213,8 +213,11 @@ bool PckFile::AddFilesFromFilesystem(const std::string& path, const std::string&
     return true;
 }
 
-void PckFile::AddSingleFile(const std::string& filesystemPath, const std::string& pckPath)
+void PckFile::AddSingleFile(const std::string& filesystemPath, std::string pckPath)
 {
+    if(pckPath.empty())
+        throw std::runtime_error("path inside pck is empty to add file to");
+
     std::cout << "Adding " << filesystemPath << " as " << pckPath << "\n";
 
     ContainedFile file;
@@ -251,6 +254,12 @@ std::string PckFile::PreparePckPath(std::string path, const std::string& stripPr
 {
     if(stripPrefix.size() > 0 && path.find(stripPrefix) == 0) {
         path = path.substr(stripPrefix.size());
+    }
+
+    // Fix Windows paths to make this work on Windows
+    for(size_t i = 0; i < path.size(); ++i) {
+        if(path[i] == '\\')
+            path[i] = '/';
     }
 
     while(path.size() > 0 && path.front() == '/') {
