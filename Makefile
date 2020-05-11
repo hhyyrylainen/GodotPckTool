@@ -34,6 +34,9 @@ build-cross:
 cmake-cross: build-cross
 	cd build-cross && mingw32-cmake ..
 
+cmake-cross-debug: build-cross
+	cd build-cross && mingw32-cmake .. -DCMAKE_BUILD_TYPE=Debug
+
 compile-cross: cmake-cross
 	$(MAKE) -C build-cross
 
