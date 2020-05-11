@@ -64,6 +64,10 @@ bool PckFile::Load()
 
         File->read(entry.Path.data(), pathLength);
 
+        // Remove trailing null bytes
+        while(!entry.Path.empty() && entry.Path.back() == '\0')
+            entry.Path.pop_back();
+
         entry.Offset = Read64();
         entry.Size = Read64();
 
@@ -118,8 +122,18 @@ bool PckFile::Save()
     // First write blank file entries as placeholders
     for(const auto& [_, entry] : Contents) {
 
-        Write32(entry.Path.size());
+        const size_t pathToWriteSize =
+            entry.Path.size() + (entry.Path.size() % PadPathsToMultipleWithNULLS);
+        const size_t padding = pathToWriteSize - entry.Path.size();
+
+        Write32(pathToWriteSize);
         File->write(entry.Path.data(), entry.Path.size());
+
+        // Padding null bytes
+        for(size_t i = 0; i < padding; ++i) {
+            char null = '\0';
+            File->write(&null, 1);
+        }
 
         continueWriteIndex[&entry] = File->tellg();
         // No offset yet

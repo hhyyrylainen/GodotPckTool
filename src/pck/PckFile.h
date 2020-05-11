@@ -92,6 +92,9 @@ private:
     uint32_t MinorGodotVersion = 0;
     uint32_t PatchGodotVersion = 0;
 
+    //! Add trailing null bytes to the length of a path until it is a multiple of this size
+    size_t PadPathsToMultipleWithNULLS = 4;
+
     std::map<std::string, ContainedFile> Contents;
 };
 
