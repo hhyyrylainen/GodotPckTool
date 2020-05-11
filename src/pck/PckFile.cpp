@@ -12,7 +12,7 @@ bool PckFile::Load()
 {
     Contents.clear();
 
-    File = std::fstream(Path, std::ios::in);
+    File = std::fstream(Path, std::ios::in | std::ios::binary);
 
     if(!File->good()) {
         std::cout << "ERROR: file is unreadable: " << Path << "\n";
@@ -22,9 +22,9 @@ bool PckFile::Load()
     File->exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
     // Separate reader to make writing work
-    DataReader = std::ifstream(Path, std::ios::in);
+    DataReader = std::ifstream(Path, std::ios::in | std::ios::binary);
 
-    if(!DataReader.has_value() || !DataReader)
+    if(!DataReader || !DataReader->good())
         throw std::runtime_error("second data reader opening failed");
 
     uint32_t magic = Read32();
@@ -85,7 +85,7 @@ bool PckFile::Save()
 {
     const auto tmpWrite = Path + ".write";
 
-    File = std::fstream(tmpWrite, std::ios::trunc | std::ios::out);
+    File = std::fstream(tmpWrite, std::ios::trunc | std::ios::out | std::ios::binary);
 
     if(!File->good()) {
         std::cout << "ERROR: file is unwriteable: " << tmpWrite << "\n";
@@ -229,7 +229,7 @@ void PckFile::AddSingleFile(const std::string& filesystemPath, const std::string
     // file.MD5 = {0};
 
     file.GetData = [filesystemPath, size]() {
-        std::ifstream reader(filesystemPath, std::ios::in);
+        std::ifstream reader(filesystemPath, std::ios::in | std::ios::binary);
 
         if(!reader.good()) {
             std::cout << "ERROR: opening for reading: " << filesystemPath << "\n";
@@ -299,7 +299,8 @@ bool PckFile::Extract(const std::string& outputPrefix)
             return false;
         }
 
-        std::ofstream writer(targetFile.string(), std::ios::trunc | std::ios::out);
+        std::ofstream writer(
+            targetFile.string(), std::ios::trunc | std::ios::out | std::ios::binary);
 
         if(!writer.good()) {
             std::cout << "ERROR: opening file for writing: " << targetFile << "\n";
