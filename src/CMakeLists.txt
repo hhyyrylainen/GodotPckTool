@@ -1,6 +1,7 @@
 add_library(pck
   pck/PckFile.h pck/PckFile.cpp
   PckTool.h PckTool.cpp
+  FileFilter.h FileFilter.cpp
   Include.h Define.h
   )
 

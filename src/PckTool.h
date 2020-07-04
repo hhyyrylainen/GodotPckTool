@@ -2,6 +2,8 @@
 
 #include "Define.h"
 
+#include "FileFilter.h"
+
 #include <nlohmann/json.hpp>
 
 #include <memory>
@@ -35,6 +37,8 @@ public:
         int GodotPatch;
 
         json FileCommands;
+
+        FileFilter Filter;
     };
 
 public:
@@ -52,6 +56,8 @@ private:
     bool RequireTargetFileExists();
 
     std::unique_ptr<PckFile> LoadPck();
+
+    void SetIncludeFilter(PckFile& pck);
 
 private:
     Options Opts;

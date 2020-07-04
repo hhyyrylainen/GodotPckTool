@@ -70,6 +70,14 @@ public:
         PatchGodotVersion = patch;
     }
 
+    //! \brief Sets a filter for entries to be added to this object
+    //!
+    //! This must be set before loading the data. The Save method doesn't apply the filter.
+    void SetIncludeFilter(std::function<bool(const ContainedFile&)> callback)
+    {
+        IncludeFilter = callback;
+    }
+
     inline const auto& GetPath()
     {
         return Path;
@@ -96,6 +104,9 @@ private:
     size_t PadPathsToMultipleWithNULLS = 4;
 
     std::map<std::string, ContainedFile> Contents;
+
+    //! Used in a bunch of operations to check if a file entry should be included or ignored
+    std::function<bool(const ContainedFile&)> IncludeFilter;
 };
 
 } // namespace pcktool

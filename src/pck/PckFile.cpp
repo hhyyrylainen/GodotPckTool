@@ -77,6 +77,9 @@ bool PckFile::Load()
             return ReadContainedFileContents(offset, size);
         };
 
+        if(IncludeFilter && !IncludeFilter(entry))
+            continue;
+
         Contents[entry.Path] = std::move(entry);
     };
 
@@ -114,6 +117,7 @@ bool PckFile::Save()
         Write32(0);
     }
 
+    // Things are filtered before adding to Contents, so we don't do any filtering here
     // File count
     Write32(Contents.size());
 
@@ -147,6 +151,8 @@ bool PckFile::Save()
 
     // Align
     int alignment = 0;
+
+    // TODO: add command line flag to enable alignment
 
     if(alignment >= 4) {
         while(File->tellg() % alignment != 0) {
@@ -200,6 +206,9 @@ bool PckFile::Save()
 // ------------------------------------ //
 void PckFile::AddFile(ContainedFile&& file)
 {
+    if(IncludeFilter && !IncludeFilter(file))
+        return;
+
     Contents[file.Path] = std::move(file);
 }
 // ------------------------------------ //
@@ -232,8 +241,6 @@ void PckFile::AddSingleFile(const std::string& filesystemPath, std::string pckPa
     if(pckPath.empty())
         throw std::runtime_error("path inside pck is empty to add file to");
 
-    std::cout << "Adding " << filesystemPath << " as " << pckPath << "\n";
-
     ContainedFile file;
 
     const auto size = std::filesystem::file_size(filesystemPath);
@@ -260,6 +267,12 @@ void PckFile::AddSingleFile(const std::string& filesystemPath, std::string pckPa
 
         return data;
     };
+
+    // TODO: might be nice to add an option to print out rejected files
+    if(IncludeFilter && !IncludeFilter(file))
+        return;
+
+    std::cout << "Adding " << filesystemPath << " as " << pckPath << "\n";
 
     Contents[pckPath] = file;
 }

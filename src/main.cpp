@@ -1,4 +1,5 @@
 #include "Define.h"
+#include "FileFilter.h"
 #include "PckTool.h"
 
 #include <cxxopts.hpp>
@@ -50,6 +51,10 @@ int main(int argc, char* argv[])
             cxxopts::value<std::string>())
         ("set-godot-version", "Set the godot version to use when creating a new pck",
             cxxopts::value<std::string>()->default_value("3.0.0"))
+        ("min-size-filter", "Set minimum size for files to include in operation",
+            cxxopts::value<uint64_t>())
+        ("max-size-filter", "Set maximum size for files to include in operation",
+            cxxopts::value<uint64_t>())
         ("v,version", "Print version and quit")
         ("h,help", "Print help and quit")
         ;
@@ -85,6 +90,7 @@ int main(int argc, char* argv[])
     std::string removePrefix;
     int godotMajor, godotMinor, godotPatch;
     nlohmann::json fileCommands;
+    pcktool::FileFilter filter;
 
     if(result.count("file")) {
         files = result["file"].as<decltype(files)>();
@@ -100,6 +106,18 @@ int main(int argc, char* argv[])
 
     if(result.count("pack")) {
         pack = result["pack"].as<std::string>();
+    }
+
+    if(result.count("pack")) {
+        pack = result["pack"].as<std::string>();
+    }
+
+    if(result.count("min-size-filter")) {
+        filter.SetSizeMinLimit(result["min-size-filter"].as<uint64_t>());
+    }
+
+    if(result.count("max-size-filter")) {
+        filter.SetSizeMaxLimit(result["max-size-filter"].as<uint64_t>());
     }
 
     action = result["action"].as<std::string>();
@@ -144,7 +162,7 @@ int main(int argc, char* argv[])
     }
 
     auto tool = pcktool::PckTool({pack, action, files, output, removePrefix, godotMajor,
-        godotMinor, godotPatch, fileCommands});
+        godotMinor, godotPatch, fileCommands, filter});
 
     return tool.Run();
 }

@@ -58,6 +58,38 @@ Long form:
 godotpcktool --pack Thrive.pck --action add --remove-prefix extracted --file extracted
 ```
 
+### Filters
+
+Filters can be used to only act on a subset of files in a pck file, or
+from the filesystem.
+
+#### Min size
+
+Specify the minimum size under which files are excluded:
+
+```sh
+godotpcktool --min-size-filter 1000
+```
+
+This will exclude files with size 999 bytes and below.
+
+### Max size
+
+Specify the maximum size above which files are excluded:
+
+```sh
+godotpcktool --max-size-filter 1000
+```
+
+NOTE: if you use max size to compliment min size extraction, you
+should subtract one from the size, otherwise you'll operate on the
+same files twice.
+
+However if you want to work on exactly some size files you can specify the same size twice:
+```sh
+godotpcktool --min-size-filter 1 --max-size-filter 1
+```
+
 ### General info
 
 In the long form multiple files may be included like this:

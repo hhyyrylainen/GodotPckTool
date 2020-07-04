@@ -68,12 +68,12 @@ int PckTool::Run()
 
         return 0;
     } else if(Opts.Action == "add" || Opts.Action == "a") {
-        std::unique_ptr<PckFile> pck;
-
         if(Files.empty()) {
             std::cout << "ERROR: no files specified\n";
             return 1;
         }
+
+        std::unique_ptr<PckFile> pck;
 
         if(TargetExists()) {
             std::cout << "Target pck exists, loading it before adding new files\n";
@@ -87,6 +87,8 @@ int PckTool::Run()
             }
         } else {
             pck = std::make_unique<PckFile>(Opts.Pack);
+
+            SetIncludeFilter(*pck);
 
             pck->SetGodotVersion(Opts.GodotMajor, Opts.GodotMinor, Opts.GodotPatch);
         }
@@ -140,12 +142,19 @@ std::unique_ptr<PckFile> PckTool::LoadPck()
 
     auto pck = std::make_unique<PckFile>(Opts.Pack);
 
+    SetIncludeFilter(*pck);
+
     if(!pck->Load()) {
         std::cout << "ERROR: couldn't load pck file: " << pck->GetPath() << "\n";
         return nullptr;
     }
 
     return pck;
+}
+// ------------------------------------ //
+void PckTool::SetIncludeFilter(PckFile& pck)
+{
+    pck.SetIncludeFilter(std::bind(&FileFilter::Include, Opts.Filter, std::placeholders::_1));
 }
 // ------------------------------------ //
 bool PckTool::BuildFileList()
