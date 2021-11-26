@@ -90,6 +90,47 @@ However if you want to work on exactly some size files you can specify the same 
 godotpcktool --min-size-filter 1 --max-size-filter 1
 ```
 
+#### Include by name
+
+The option to include files can be given a list of regular expressions that select only files
+that match at least one of them to be processed. For example, you can list all files containing
+"po" in their names with:
+```sh
+godotpcktool --include-regex-filter po
+```
+
+Or if you want to require that to be the file extension (note that different shells require
+different escaping):
+```sh
+godotpcktool -i '\.po'
+```
+
+Multiple regular expressions can be separated by comma, or specified by giving the option
+multiple times:
+```sh
+godotpcktool -i '\.po,\.txt'
+godotpcktool -i '\.po' -i '\.txt'
+```
+
+If no include filter is specified, all files pass through it. So not specifying an include
+filter means "process all files".
+
+Note that filtering is case-sensitive.
+
+#### Exclude by name
+
+Files can also be excluded if they match a regular expression:
+```sh
+godotpcktool --exclude-regex-filter txt
+```
+
+If both include and exclude filters are specified, then first the include filter is applied,
+after that the exclude filter is used to filter out files that passed the first filter.
+For example to find files containing "po" but no "zh":
+```sh
+godotpcktool -i '\.po' -e 'zh'
+```
+
 ### General info
 
 In the long form multiple files may be included like this:

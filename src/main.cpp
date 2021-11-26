@@ -36,6 +36,19 @@ std::tuple<int, int, int> ParseGodotVersion(const std::string& version)
         std::stoi(matches[1]), std::stoi(matches[2]), std::stoi(matches[3]));
 }
 
+std::vector<std::regex> ParseRegexList(const std::vector<std::string>& regexTexts)
+{
+    std::vector<std::regex> result;
+    result.reserve(regexTexts.size());
+
+    for(const auto& text : regexTexts) {
+        // TODO: should we allow enabling case-insensitive mode?
+        result.emplace_back(text, std::regex_constants::ECMAScript);
+    }
+
+    return result;
+}
+
 int main(int argc, char* argv[])
 {
     cxxopts::Options options("godotpcktool", "Godot .pck file extractor and packer");
@@ -57,6 +70,13 @@ int main(int argc, char* argv[])
             cxxopts::value<uint64_t>())
         ("max-size-filter", "Set maximum size for files to include in operation",
             cxxopts::value<uint64_t>())
+        ("i,include-regex-filter", "Set inclusion regexes for files to include in operation, "
+            "if not set all files are included",
+            cxxopts::value<std::vector<std::string>>())
+        ("e,exclude-regex-filter", "Set exclusion regexes for files to include in operation, "
+            "if both include and exclude are specified includes are handled first and "
+            "excludes exclude files that include filters passed through",
+            cxxopts::value<std::vector<std::string>>())
         ("v,version", "Print version and quit")
         ("h,help", "Print help and quit")
         ;
@@ -122,6 +142,17 @@ int main(int argc, char* argv[])
 
     if(result.count("max-size-filter")) {
         filter.SetSizeMaxLimit(result["max-size-filter"].as<uint64_t>());
+    }
+
+    if(result.count("include-regex-filter")) {
+        // TODO: should we add a wildcard / plain text search mode?
+        filter.SetIncludeRegexes(
+            ParseRegexList(result["include-regex-filter"].as<std::vector<std::string>>()));
+    }
+
+    if(result.count("exclude-regex-filter")) {
+        filter.SetExcludeRegexes(
+            ParseRegexList(result["exclude-regex-filter"].as<std::vector<std::string>>()));
     }
 
     action = result["action"].as<std::string>();
