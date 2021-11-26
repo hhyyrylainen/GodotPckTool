@@ -54,6 +54,8 @@ bool PckFile::Load()
     // Now we are at the file section
     const auto files = Read32();
 
+    size_t excluded = 0;
+
     for(uint32_t i = 0; i < files; i++) {
 
         const auto pathLength = Read32();
@@ -77,14 +79,20 @@ bool PckFile::Load()
             return ReadContainedFileContents(offset, size);
         };
 
-        if(IncludeFilter && !IncludeFilter(entry))
+        if(IncludeFilter && !IncludeFilter(entry)) {
+            ++excluded;
             continue;
+        }
 
         Contents[entry.Path] = std::move(entry);
     }
 
     File->close();
     File.reset();
+
+    if(excluded)
+        std::cout << Path << " files excluded by filters: " << excluded << "\n";
+
     return true;
 }
 // ------------------------------------ //
