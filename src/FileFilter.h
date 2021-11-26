@@ -4,6 +4,8 @@
 
 #include "pck/PckFile.h"
 
+#include <limits>
+
 namespace pcktool {
 
 //! \brief An include / exclude filter for files
