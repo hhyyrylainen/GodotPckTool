@@ -108,10 +108,6 @@ int main(int argc, char* argv[])
         pack = result["pack"].as<std::string>();
     }
 
-    if(result.count("pack")) {
-        pack = result["pack"].as<std::string>();
-    }
-
     if(result.count("min-size-filter")) {
         filter.SetSizeMinLimit(result["min-size-filter"].as<uint64_t>());
     }
