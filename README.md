@@ -131,6 +131,17 @@ For example to find files containing "po" but no "zh":
 godotpcktool -i '\.po' -e 'zh'
 ```
 
+#### Overriding filters
+
+If you need more complex filtering you can specify regular expressions with
+`--include-override-filter` which makes any file matching any of those
+regular expression be included in the operation, even if another filter
+would cause the file to be excluded. For example you can use this to set
+file size limits and then override those for specific type:
+```sh
+godotpcktool --min-size-filter 1000 --include-override-filter '\.txt'
+```
+
 ### General info
 
 In the long form multiple files may be included like this:

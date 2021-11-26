@@ -36,6 +36,11 @@ public:
         ExcludePatterns = filters;
     }
 
+    void SetIncludeOverrideRegexes(const std::vector<std::regex>& filters)
+    {
+        OverridePatterns = filters;
+    }
+
 private:
     //! File is excluded if it is under this size
     uint64_t MinSizeLimit = 0;
@@ -51,6 +56,10 @@ private:
     //! any file being checked) must not regex_search find a match in any regexes in this
     //! vector, if they do, they are excluded
     std::vector<std::regex> ExcludePatterns;
+
+    //! If non-empty then any files that pass this filter are included anyway, even if they
+    //! would fail another inclusion check
+    std::vector<std::regex> OverridePatterns;
 };
 
 } // namespace pcktool
