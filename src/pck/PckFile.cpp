@@ -220,7 +220,8 @@ void PckFile::AddFile(ContainedFile&& file)
     Contents[file.Path] = std::move(file);
 }
 // ------------------------------------ //
-bool PckFile::AddFilesFromFilesystem(const std::string& path, const std::string& stripPrefix)
+bool PckFile::AddFilesFromFilesystem(
+    const std::string& path, const std::string& stripPrefix, bool printAddedFiles /*= false*/)
 {
     if(!std::filesystem::exists(path)) {
         return false;
@@ -228,7 +229,7 @@ bool PckFile::AddFilesFromFilesystem(const std::string& path, const std::string&
 
     if(!std::filesystem::is_directory(path)) {
         // Just a single file
-        AddSingleFile(path, PreparePckPath(path, stripPrefix));
+        AddSingleFile(path, PreparePckPath(path, stripPrefix), printAddedFiles);
         return true;
     }
 
@@ -238,13 +239,14 @@ bool PckFile::AddFilesFromFilesystem(const std::string& path, const std::string&
 
         const std::string entryPath = entry.path().string();
 
-        AddSingleFile(entryPath, PreparePckPath(entryPath, stripPrefix));
+        AddSingleFile(entryPath, PreparePckPath(entryPath, stripPrefix), printAddedFiles);
     }
 
     return true;
 }
 
-void PckFile::AddSingleFile(const std::string& filesystemPath, std::string pckPath)
+void PckFile::AddSingleFile(const std::string& filesystemPath, const std::string& pckPath,
+    bool printAddedFile /*= false*/)
 {
     if(pckPath.empty())
         throw std::runtime_error("path inside pck is empty to add file to");
@@ -280,7 +282,8 @@ void PckFile::AddSingleFile(const std::string& filesystemPath, std::string pckPa
     if(IncludeFilter && !IncludeFilter(file))
         return;
 
-    std::cout << "Adding " << filesystemPath << " as " << pckPath << "\n";
+    if(printAddedFile)
+        std::cout << "Adding " << filesystemPath << " as " << pckPath << "\n";
 
     Contents[pckPath] = file;
 }
@@ -313,7 +316,7 @@ void PckFile::ChangePath(const std::string& path)
     Path = path;
 }
 // ------------------------------------ //
-bool PckFile::Extract(const std::string& outputPrefix)
+bool PckFile::Extract(const std::string& outputPrefix, bool printExtracted)
 {
     const auto outputBase = std::filesystem::path(outputPrefix);
 
@@ -334,7 +337,9 @@ bool PckFile::Extract(const std::string& outputPrefix)
         const auto targetFolder = outputBase / baseFolder;
         const auto targetFile = targetFolder / filename;
 
-        std::cout << "Extracting " << path << " to " << targetFile << "\n";
+        if(printExtracted)
+            std::cout << "Extracting " << path << " to " << targetFile << "\n";
+
         try {
             std::filesystem::create_directories(targetFolder);
         } catch(const std::filesystem::filesystem_error& e) {

@@ -39,6 +39,8 @@ public:
         json FileCommands;
 
         FileFilter Filter;
+
+        bool ReducedVerbosity;
     };
 
 public:

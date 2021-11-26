@@ -77,6 +77,7 @@ int main(int argc, char* argv[])
             "if both include and exclude are specified includes are handled first and "
             "excludes exclude files that include filters passed through",
             cxxopts::value<std::vector<std::string>>())
+        ("q,quieter", "Don't output all processed files to keep output more compact")
         ("v,version", "Print version and quit")
         ("h,help", "Print help and quit")
         ;
@@ -113,6 +114,7 @@ int main(int argc, char* argv[])
     int godotMajor, godotMinor, godotPatch;
     nlohmann::json fileCommands;
     pcktool::FileFilter filter;
+    bool reducedVerbosity = false;
 
     if(result.count("file")) {
         files = result["file"].as<decltype(files)>();
@@ -153,6 +155,10 @@ int main(int argc, char* argv[])
     if(result.count("exclude-regex-filter")) {
         filter.SetExcludeRegexes(
             ParseRegexList(result["exclude-regex-filter"].as<std::vector<std::string>>()));
+    }
+
+    if(result.count("quieter")) {
+        reducedVerbosity = true;
     }
 
     action = result["action"].as<std::string>();
@@ -197,7 +203,7 @@ int main(int argc, char* argv[])
     }
 
     auto tool = pcktool::PckTool({pack, action, files, output, removePrefix, godotMajor,
-        godotMinor, godotPatch, fileCommands, filter});
+        godotMinor, godotPatch, fileCommands, filter, reducedVerbosity});
 
     return tool.Run();
 }

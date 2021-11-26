@@ -46,16 +46,18 @@ public:
     bool Save();
 
     //! \brief Extracts the read contents to the outputPrefix
-    bool Extract(const std::string& outputPrefix);
+    bool Extract(const std::string& outputPrefix, bool printExtracted);
 
     void PrintFileList(bool includeSize = true);
 
     void AddFile(ContainedFile&& file);
 
     //! \brief Adds recursively files from path to this pck
-    bool AddFilesFromFilesystem(const std::string& path, const std::string& stripPrefix);
+    bool AddFilesFromFilesystem(
+        const std::string& path, const std::string& stripPrefix, bool printAddedFiles = false);
 
-    void AddSingleFile(const std::string& filesystemPath, std::string pckPath);
+    void AddSingleFile(const std::string& filesystemPath, const std::string& pckPath,
+        bool printAddedFile = false);
 
     //! \note Automatically converts \'s in the path to /'s
     std::string PreparePckPath(std::string path, const std::string& stripPrefix);

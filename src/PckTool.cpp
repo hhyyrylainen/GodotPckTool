@@ -62,10 +62,12 @@ int PckTool::Run()
 
         std::cout << "Extracting to: " << Opts.Output << "\n";
 
-        if(!pck->Extract(Opts.Output)) {
+        if(!pck->Extract(Opts.Output, !Opts.ReducedVerbosity)) {
             std::cout << "ERROR: extraction failed\n";
             return 2;
         }
+
+        std::cout << "Extraction completed\n";
 
         return 0;
     } else if(Opts.Action == "add" || Opts.Action == "a") {
@@ -97,10 +99,12 @@ int PckTool::Run()
         for(const auto& entry : Files) {
             if(!entry.Target.empty()) {
                 // Already known target for a single file
-                pck->AddSingleFile(entry.InputFile, pck->PreparePckPath(entry.Target, ""));
+                pck->AddSingleFile(entry.InputFile, pck->PreparePckPath(entry.Target, ""),
+                    !Opts.ReducedVerbosity);
             } else {
                 // Potentially a folder tree with no pre-defined targets
-                if(!pck->AddFilesFromFilesystem(entry.InputFile, Opts.RemovePrefix)) {
+                if(!pck->AddFilesFromFilesystem(
+                       entry.InputFile, Opts.RemovePrefix, !Opts.ReducedVerbosity)) {
                     std::cout << "ERROR: failed to process file to add: " << entry.InputFile
                               << "\n";
                     return 3;
