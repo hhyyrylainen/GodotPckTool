@@ -44,6 +44,8 @@ int main(int argc, char* argv[])
     options.add_options()
         ("p,pack", "Pck file to use", cxxopts::value<std::string>())
         ("a,action", "Action to perform", cxxopts::value<std::string>()->default_value("list"))
+        ("positional-file", "Files to perform the action on",
+            cxxopts::value<std::vector<std::string>>())
         ("f,file", "Files to perform the action on",
             cxxopts::value<std::vector<std::string>>())
         ("o,output", "Target folder for extracting", cxxopts::value<std::string>())
@@ -60,7 +62,7 @@ int main(int argc, char* argv[])
         ;
     // clang-format on
 
-    options.parse_positional({"file"});
+    options.parse_positional({"positional-file"});
     options.positional_help("files");
 
     auto result = options.parse(argc, argv);
@@ -94,6 +96,12 @@ int main(int argc, char* argv[])
 
     if(result.count("file")) {
         files = result["file"].as<decltype(files)>();
+    }
+
+    if(result.count("positional-file")) {
+        for(const auto& file : result["positional-file"].as<decltype(files)>()) {
+            files.push_back(file);
+        }
     }
 
     if(result.count("output")) {
