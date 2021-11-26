@@ -5,10 +5,11 @@
 
 #include <filesystem>
 #include <iostream>
+#include <utility>
 
 using namespace pcktool;
 // ------------------------------------ //
-PckTool::PckTool(const Options& options) : Opts(options) {}
+PckTool::PckTool(Options options) : Opts(std::move(options)) {}
 // ------------------------------------ //
 int PckTool::Run()
 {
@@ -120,7 +121,7 @@ int PckTool::Run()
     return 1;
 }
 // ------------------------------------ //
-bool PckTool::TargetExists()
+bool PckTool::TargetExists() const
 {
     return std::filesystem::exists(Opts.Pack);
 }

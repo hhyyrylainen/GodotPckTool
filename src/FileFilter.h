@@ -12,7 +12,7 @@ namespace pcktool {
 class FileFilter {
 public:
     //! \returns true if filter doesn't exclude a file
-    bool Include(const PckFile::ContainedFile& file);
+    bool Include(const PckFile::ContainedFile& file) const;
 
     void SetSizeMinLimit(uint64_t size)
     {

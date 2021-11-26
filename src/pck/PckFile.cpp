@@ -81,7 +81,7 @@ bool PckFile::Load()
             continue;
 
         Contents[entry.Path] = std::move(entry);
-    };
+    }
 
     File->close();
     File.reset();
@@ -95,7 +95,7 @@ bool PckFile::Save()
     File = std::fstream(tmpWrite, std::ios::trunc | std::ios::out | std::ios::binary);
 
     if(!File->good()) {
-        std::cout << "ERROR: file is unwriteable: " << tmpWrite << "\n";
+        std::cout << "ERROR: file is unwritable: " << tmpWrite << "\n";
         return false;
     }
 

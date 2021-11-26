@@ -8,6 +8,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <utility>
 
 namespace pcktool {
 
@@ -32,7 +33,7 @@ public:
     };
 
 public:
-    PckFile(const std::string& path);
+    explicit PckFile(const std::string& path);
     PckFile(PckFile&& other) = delete;
     PckFile(const PckFile& other) = delete;
 
@@ -75,7 +76,7 @@ public:
     //! This must be set before loading the data. The Save method doesn't apply the filter.
     void SetIncludeFilter(std::function<bool(const ContainedFile&)> callback)
     {
-        IncludeFilter = callback;
+        IncludeFilter = std::move(callback);
     }
 
     inline const auto& GetPath()

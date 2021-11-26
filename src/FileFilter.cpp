@@ -3,7 +3,7 @@
 
 using namespace pcktool;
 // ------------------------------------ //
-bool FileFilter::Include(const PckFile::ContainedFile& file)
+bool FileFilter::Include(const PckFile::ContainedFile& file) const
 {
     if(file.Size < MinSizeLimit)
         return false;

@@ -15,7 +15,7 @@ void PrintActionLine(const std::string_view firstPart, const std::string_view de
 {
     std::cout << "  " << firstPart;
 
-    int padding = MAX_ACTION_NAME_LENGTH - firstPart.size() - 2;
+    int padding = MAX_ACTION_NAME_LENGTH - static_cast<int>(firstPart.size()) - 2;
 
     for(int i = 0; i < padding; ++i)
         std::cout << " ";

@@ -42,7 +42,7 @@ public:
     };
 
 public:
-    PckTool(const Options& options);
+    explicit PckTool(Options options);
 
     //! \brief Runs the tool
     //! \returns The exit code to return
@@ -51,7 +51,7 @@ public:
 private:
     bool BuildFileList();
 
-    bool TargetExists();
+    bool TargetExists() const;
 
     bool RequireTargetFileExists();
 
