@@ -1,0 +1,10 @@
+<component name="ProjectCodeStyleConfiguration">
+  <code_scheme name="Project" version="173">
+    <clangFormatSettings>
+      <option name="ENABLED" value="true" />
+    </clangFormatSettings>
+    <stylecop>
+      <option name="ENABLED" value="true" />
+    </stylecop>
+  </code_scheme>
+</component>
