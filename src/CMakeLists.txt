@@ -2,7 +2,7 @@ add_library(pck
   pck/PckFile.h pck/PckFile.cpp
   PckTool.h PckTool.cpp
   FileFilter.h FileFilter.cpp
-  Include.h Define.h
+  "${PROJECT_BINARY_DIR}/Include.h" Define.h
   )
 
 target_link_libraries(pck PUBLIC)
