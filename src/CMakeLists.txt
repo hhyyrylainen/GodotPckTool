@@ -27,7 +27,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
   target_link_libraries(godotpcktool PRIVATE -static)
 endif()
 
-set_target_properties(godotpcktool PROPERTIES LINK_FLAGS_RELEASE -s)
+if(NOT WIN32)
+  set_target_properties(godotpcktool PROPERTIES LINK_FLAGS_RELEASE "-s -fuse-ld=gold")
+else()
+  set_target_properties(godotpcktool PROPERTIES LINK_FLAGS_RELEASE "-s")
+endif()
 
 set_target_properties(godotpcktool PROPERTIES
   CXX_STANDARD 17
