@@ -1,3 +1,5 @@
+include(CheckIPOSupported)
+
 add_library(pck
   pck/PckFile.h pck/PckFile.cpp
   PckTool.h PckTool.cpp
@@ -31,5 +33,10 @@ set_target_properties(godotpcktool PROPERTIES
   CXX_STANDARD 17
   CXX_EXTENSIONS OFF
   )
+
+check_ipo_supported(RESULT result)
+if(result)
+  set_target_properties(godotpcktool PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 
 install(TARGETS godotpcktool)
