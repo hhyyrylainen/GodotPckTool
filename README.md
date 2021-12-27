@@ -161,7 +161,12 @@ the list of files.
 Building
 --------
 
-These are instructions for building this on Fedora, including cross compiling to Windows.
+These are instructions for building this on Fedora, including cross
+compiling to Windows.
+
+Note that native Linux build uses the glibc of the currently installed
+system, which may be too new for older distros. For a build that
+supports those, see the section about podman builds.
 
 ### Required libraries
 
@@ -171,7 +176,7 @@ sudo dnf install cmake gcc-c++ libstdc++-static mingw32-gcc-c++ mingw32-winpthre
 
 Also don't forget to init git submodules.
 
-Then just
+Then just:
 ```sh
 make
 ```
@@ -181,3 +186,17 @@ Also if you want to make a folder with the executables and cross compile:
 ```sh
 make all-install
 ```
+
+### Podman build
+
+Podman can be used to build a Linux binary using the oldest supported
+Ubuntu LTS. This ensures widest compatibility of the resulting binary.
+
+First make sure podman and make are installed, then run the make
+target:
+```sh
+make compile-podman
+```
+
+Due to the use of C++ 17 and non-ancient cmake version, the oldest
+working Ubuntu LTS is currently 20.04.
