@@ -134,8 +134,11 @@ bool PckFile::Save()
     // First write blank file entries as placeholders
     for(const auto& [_, entry] : Contents) {
 
+        // When the path is exactly the right size, this results in 4 extra NULLs
+        // but that seems to be what Godot itself also does
         const size_t pathToWriteSize =
-            entry.Path.size() + (entry.Path.size() % PadPathsToMultipleWithNULLS);
+            entry.Path.size() +
+            (PadPathsToMultipleWithNULLS - (entry.Path.size() % PadPathsToMultipleWithNULLS));
         const size_t padding = pathToWriteSize - entry.Path.size();
 
         Write32(pathToWriteSize);
