@@ -41,7 +41,7 @@ bool PckFile::Load()
     MinorGodotVersion = Read32();
     PatchGodotVersion = Read32();
 
-    if(FormatVersion > MAX_PCK_FORMAT_VERSION) {
+    if(FormatVersion > MAX_SUPPORTED_PCK_VERSION) {
         std::cout << "ERROR: pck is unsupported version: " << FormatVersion << "\n";
         return false;
     }
