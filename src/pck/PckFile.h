@@ -15,8 +15,8 @@ namespace pcktool {
 // Pck magic
 constexpr uint32_t PCK_HEADER_MAGIC = 0x43504447;
 
-// Pck version
-constexpr int PCK_FORMAT_VERSION = 1;
+// Highest pck version supported by this tool
+constexpr int MAX_SUPPORTED_PCK_VERSION = 1;
 
 //! \brief A single pck file object. Handles reading and writing
 //!
@@ -97,6 +97,12 @@ private:
     std::string Path;
     std::optional<std::fstream> File;
     std::optional<std::ifstream> DataReader;
+
+    // PCK Format version number
+    // 0 = Godot 1.x, 2.x
+    // 1 = Godot 3.x
+    // 2 = Godot 4.x
+    uint32_t FormatVersion = 1;
 
     // Loaded version info from a pack
     uint32_t MajorGodotVersion = 0;
