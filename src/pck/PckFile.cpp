@@ -34,15 +34,15 @@ bool PckFile::Load()
         return false;
     }
 
-    uint32_t version = Read32();
+    FormatVersion = Read32();
 
     // Godot engine version, we don't care about these
     MajorGodotVersion = Read32();
     MinorGodotVersion = Read32();
     PatchGodotVersion = Read32();
 
-    if(version != PCK_FORMAT_VERSION) {
-        std::cout << "ERROR: pck is unsupported version: " << version << "\n";
+    if(FormatVersion > MAX_PCK_FORMAT_VERSION) {
+        std::cout << "ERROR: pck is unsupported version: " << FormatVersion << "\n";
         return false;
     }
 
@@ -112,7 +112,7 @@ bool PckFile::Save()
     // Header
 
     Write32(PCK_HEADER_MAGIC);
-    Write32(PCK_FORMAT_VERSION);
+    Write32(FormatVersion);
 
     // Godot version
 
