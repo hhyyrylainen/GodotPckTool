@@ -102,7 +102,7 @@ private:
     // 0 = Godot 1.x, 2.x
     // 1 = Godot 3.x
     // 2 = Godot 4.x
-    uint32_t FormatVersion = 0;
+    uint32_t FormatVersion = 1;
 
     // Loaded version info from a pack
     uint32_t MajorGodotVersion = 0;
