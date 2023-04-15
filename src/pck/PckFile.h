@@ -15,7 +15,7 @@ namespace pcktool {
 // Pck magic
 constexpr uint32_t PCK_HEADER_MAGIC = 0x43504447;
 
-// Pck version
+// Highest pck version supported by this tool
 constexpr int MAX_PCK_FORMAT_VERSION = 1;
 
 //! \brief A single pck file object. Handles reading and writing
