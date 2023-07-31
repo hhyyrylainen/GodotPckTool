@@ -46,6 +46,16 @@ bool PckFile::Load()
         return false;
     }
 
+    if(FormatVersion == 2) {
+        Flags = Read32();
+        FileOffsetBase = Read64();
+    }
+
+    if(Flags & PACK_DIR_ENCRYPTED) {
+        std::cout << "ERROR: pck is encrypted\n";
+        return false;
+    }
+
     // Reserved
     for(int i = 0; i < 16; i++) {
         Read32();
@@ -70,10 +80,14 @@ bool PckFile::Load()
         while(!entry.Path.empty() && entry.Path.back() == '\0')
             entry.Path.pop_back();
 
-        entry.Offset = Read64();
+        entry.Offset = FileOffsetBase + Read64();
         entry.Size = Read64();
 
         File->read(reinterpret_cast<char*>(entry.MD5.data()), sizeof(entry.MD5));
+
+        if(FormatVersion == 2) {
+            entry.Flags = Read32();
+        }
 
         entry.GetData = [offset = entry.Offset, size = entry.Size, this]() {
             return ReadContainedFileContents(offset, size);
