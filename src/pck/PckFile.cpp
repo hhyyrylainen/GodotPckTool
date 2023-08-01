@@ -41,7 +41,7 @@ bool PckFile::Load()
     MinorGodotVersion = Read32();
     PatchGodotVersion = Read32();
 
-    if(FormatVersion > MAX_SUPPORTED_PCK_VERSION) {
+    if(FormatVersion > MAX_SUPPORTED_PCK_VERSION_LOAD) {
         std::cout << "ERROR: pck is unsupported version: " << FormatVersion << "\n";
         return false;
     }
@@ -112,6 +112,11 @@ bool PckFile::Load()
 // ------------------------------------ //
 bool PckFile::Save()
 {
+    if(FormatVersion > MAX_SUPPORTED_PCK_VERSION_SAVE) {
+        std::cout << "ERROR: cannot save pck version: " << FormatVersion << "\n";
+        return false;
+    }
+
     const auto tmpWrite = Path + ".write";
 
     File = std::fstream(tmpWrite, std::ios::trunc | std::ios::out | std::ios::binary);

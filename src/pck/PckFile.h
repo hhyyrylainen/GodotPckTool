@@ -17,7 +17,8 @@ constexpr uint32_t PCK_HEADER_MAGIC = 0x43504447;
 constexpr uint32_t PACK_DIR_ENCRYPTED = 1;
 
 // Highest pck version supported by this tool
-constexpr int MAX_SUPPORTED_PCK_VERSION = 2;
+constexpr int MAX_SUPPORTED_PCK_VERSION_LOAD = 2;
+constexpr int MAX_SUPPORTED_PCK_VERSION_SAVE = 1;
 
 //! \brief A single pck file object. Handles reading and writing
 //!
