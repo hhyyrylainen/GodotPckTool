@@ -14,9 +14,11 @@ namespace pcktool {
 
 // Pck magic
 constexpr uint32_t PCK_HEADER_MAGIC = 0x43504447;
+constexpr uint32_t PACK_DIR_ENCRYPTED = 1;
 
 // Highest pck version supported by this tool
-constexpr int MAX_SUPPORTED_PCK_VERSION = 1;
+constexpr int MAX_SUPPORTED_PCK_VERSION_LOAD = 2;
+constexpr int MAX_SUPPORTED_PCK_VERSION_SAVE = 1;
 
 //! \brief A single pck file object. Handles reading and writing
 //!
@@ -28,6 +30,7 @@ public:
         uint64_t Offset;
         uint64_t Size;
         std::array<uint8_t, 16> MD5 = {0};
+        uint32_t Flags = 0;
 
         std::function<std::string()> GetData;
     };
@@ -108,6 +111,9 @@ private:
     uint32_t MajorGodotVersion = 0;
     uint32_t MinorGodotVersion = 0;
     uint32_t PatchGodotVersion = 0;
+
+    uint32_t Flags = 0;
+    uint64_t FileOffsetBase = 0;
 
     //! Add trailing null bytes to the length of a path until it is a multiple of this size
     size_t PadPathsToMultipleWithNULLS = 4;

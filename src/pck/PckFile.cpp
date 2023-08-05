@@ -41,8 +41,18 @@ bool PckFile::Load()
     MinorGodotVersion = Read32();
     PatchGodotVersion = Read32();
 
-    if(FormatVersion > MAX_SUPPORTED_PCK_VERSION) {
+    if(FormatVersion > MAX_SUPPORTED_PCK_VERSION_LOAD) {
         std::cout << "ERROR: pck is unsupported version: " << FormatVersion << "\n";
+        return false;
+    }
+
+    if(FormatVersion == 2) {
+        Flags = Read32();
+        FileOffsetBase = Read64();
+    }
+
+    if(Flags & PACK_DIR_ENCRYPTED) {
+        std::cout << "ERROR: pck is encrypted\n";
         return false;
     }
 
@@ -70,10 +80,14 @@ bool PckFile::Load()
         while(!entry.Path.empty() && entry.Path.back() == '\0')
             entry.Path.pop_back();
 
-        entry.Offset = Read64();
+        entry.Offset = FileOffsetBase + Read64();
         entry.Size = Read64();
 
         File->read(reinterpret_cast<char*>(entry.MD5.data()), sizeof(entry.MD5));
+
+        if(FormatVersion == 2) {
+            entry.Flags = Read32();
+        }
 
         entry.GetData = [offset = entry.Offset, size = entry.Size, this]() {
             return ReadContainedFileContents(offset, size);
@@ -98,6 +112,11 @@ bool PckFile::Load()
 // ------------------------------------ //
 bool PckFile::Save()
 {
+    if(FormatVersion > MAX_SUPPORTED_PCK_VERSION_SAVE) {
+        std::cout << "ERROR: cannot save pck version: " << FormatVersion << "\n";
+        return false;
+    }
+
     const auto tmpWrite = Path + ".write";
 
     File = std::fstream(tmpWrite, std::ios::trunc | std::ios::out | std::ios::binary);
