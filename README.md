@@ -142,6 +142,20 @@ file size limits and then override those for specific type:
 godotpcktool --min-size-filter 1000 --include-override-filter '\.txt'
 ```
 
+### Advanced Options
+
+#### Specifying Engine Version
+
+When creating a .pck file it is possible to specify the Godot engine
+version the .pck says it is created with:
+
+```sh
+godotpcktool NewPack.pck -a a some_file.txt --set-godot-version 3.5.0
+```
+
+Note that this approach **does not** override the engine version number in existing .pck
+files. This currently only applies to new .pck files.
+
 ### General info
 
 In the long form multiple files may be included like this:
