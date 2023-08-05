@@ -20,6 +20,9 @@ constexpr uint32_t PACK_DIR_ENCRYPTED = 1;
 constexpr int MAX_SUPPORTED_PCK_VERSION_LOAD = 2;
 constexpr int MAX_SUPPORTED_PCK_VERSION_SAVE = 1;
 
+constexpr int GODOT_3_PCK_VERSION = 1;
+constexpr int GODOT_4_PCK_VERSION = 2;
+
 //! \brief A single pck file object. Handles reading and writing
 //!
 //! Probably only works on little endian systems
@@ -69,12 +72,11 @@ public:
 
     std::string ReadContainedFileContents(uint64_t offset, uint64_t size);
 
-    void SetGodotVersion(uint32_t major, uint32_t minor, uint32_t patch)
-    {
-        MajorGodotVersion = major;
-        MinorGodotVersion = minor;
-        PatchGodotVersion = patch;
-    }
+    //! \brief Set the specified Godot engine version this pck says it is
+    //!
+    //! This will update the .pck file format version to also match the engine version if
+    //! necessary (for example Godot 4 uses pck version 2)
+    void SetGodotVersion(uint32_t major, uint32_t minor, uint32_t patch);
 
     //! \brief Sets a filter for entries to be added to this object
     //!
@@ -90,7 +92,7 @@ public:
     }
 
 private:
-    // These need swaps on non little endian machine
+    // These need swaps on non-little endian machine
     uint32_t Read32();
     uint64_t Read64();
     void Write32(uint32_t value);

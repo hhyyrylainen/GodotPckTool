@@ -420,6 +420,21 @@ std::string PckFile::ReadContainedFileContents(uint64_t offset, uint64_t size)
     return result;
 }
 // ------------------------------------ //
+void PckFile::SetGodotVersion(uint32_t major, uint32_t minor, uint32_t patch)
+{
+    MajorGodotVersion = major;
+    MinorGodotVersion = minor;
+    PatchGodotVersion = patch;
+
+    if(MajorGodotVersion <= 3) {
+
+        FormatVersion = GODOT_3_PCK_VERSION;
+    } else if(MajorGodotVersion >= 4) {
+
+        FormatVersion = GODOT_4_PCK_VERSION;
+    }
+}
+// ------------------------------------ //
 uint32_t PckFile::Read32()
 {
     uint32_t value;
