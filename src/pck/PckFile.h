@@ -103,10 +103,11 @@ private:
     std::optional<std::fstream> File;
     std::optional<std::ifstream> DataReader;
 
-    // PCK Format version number
-    // 0 = Godot 1.x, 2.x
-    // 1 = Godot 3.x
-    // 2 = Godot 4.x
+    //! \brief PCK Format version number
+    //!
+    //! 0 = Godot 1.x, 2.x
+    //! 1 = Godot 3.x
+    //! 2 = Godot 4.x
     uint32_t FormatVersion = 1;
 
     // Loaded version info from a pack
