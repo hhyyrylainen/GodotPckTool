@@ -190,6 +190,11 @@ sudo dnf install cmake gcc-c++ libstdc++-static mingw32-gcc-c++ mingw32-winpthre
 
 Also don't forget to init git submodules.
 
+```sh
+git submodule init
+git submodule update
+```
+
 Then just:
 ```sh
 make
