@@ -5,4 +5,7 @@
 
 #cmakedefine01 MD5_BIG_ENDIAN
 
+// Needed to make md5_loc.h compile
+#undef UINT32_MAX
+
 #endif // __MD5_CONF_H__
