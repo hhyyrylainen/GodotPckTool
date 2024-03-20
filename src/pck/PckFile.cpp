@@ -1,14 +1,17 @@
 // ------------------------------------ //
 #include "PckFile.h"
 
+#include <cstring>
 #include <filesystem>
 #include <iostream>
 #include <utility>
 
 #include "md5.h"
 
-using namespace pcktool;
+static_assert(MD5_SIZE == 16, "MD5 size changed");
 // ------------------------------------ //
+using namespace pcktool;
+
 PckFile::PckFile(std::string path) : Path(std::move(path)) {}
 // ------------------------------------ //
 bool PckFile::Load()
@@ -239,7 +242,7 @@ bool PckFile::Save()
 
         // Update MD5
         // The md5 library assumes the write target size here
-        static_assert(sizeof(entry.MD5) == 16);
+        static_assert(sizeof(entry.MD5) == MD5_SIZE);
         md5::md5_t(data.data(), data.size(), entry.MD5.data());
 
         PadToAlignment();
@@ -438,12 +441,24 @@ bool PckFile::Extract(const std::string& outputPrefix, bool printExtracted)
     return true;
 }
 // ------------------------------------ //
-void PckFile::PrintFileList(bool includeSize /*= true*/)
+void PckFile::PrintFileList(bool printHashes, bool includeSize /*= true*/)
 {
+    char signatureTempBuffer[MD5_STRING_SIZE];
+
     for(const auto& [path, entry] : Contents) {
         std::cout << path;
         if(includeSize)
             std::cout << " size: " << entry.Size;
+
+        // TODO: flag to also verify the hashes?
+        if(printHashes) {
+            static_assert(sizeof(entry.MD5) == MD5_SIZE);
+            md5::sig_to_string(entry.MD5.data(), signatureTempBuffer, MD5_STRING_SIZE);
+
+            std::cout << " md5: "
+                      << std::string_view(
+                             signatureTempBuffer, std::strlen(signatureTempBuffer));
+        }
 
         std::cout << "\n";
     }

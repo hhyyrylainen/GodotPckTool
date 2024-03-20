@@ -41,6 +41,7 @@ public:
         FileFilter Filter;
 
         bool ReducedVerbosity;
+        bool PrintHashes;
     };
 
 public:

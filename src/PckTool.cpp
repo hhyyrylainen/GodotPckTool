@@ -24,7 +24,7 @@ int PckTool::Run()
 
         std::cout << "Contents of '" << Opts.Pack << "':\n";
 
-        pck->PrintFileList();
+        pck->PrintFileList(Opts.PrintHashes);
 
         std::cout << "end of contents.\n";
         return 0;

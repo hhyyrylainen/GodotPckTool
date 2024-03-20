@@ -82,6 +82,7 @@ int main(int argc, char* argv[])
             "matching this",
             cxxopts::value<std::vector<std::string>>())
         ("q,quieter", "Don't output all processed files to keep output more compact")
+        ("print-hashes", "Print hashes of contained files in the .pck")
         ("v,version", "Print version and quit")
         ("h,help", "Print help and quit")
         ;
@@ -119,6 +120,7 @@ int main(int argc, char* argv[])
     nlohmann::json fileCommands;
     pcktool::FileFilter filter;
     bool reducedVerbosity = false;
+    bool printHashes = false;
 
     if(result.count("file")) {
         files = result["file"].as<decltype(files)>();
@@ -170,6 +172,10 @@ int main(int argc, char* argv[])
         reducedVerbosity = true;
     }
 
+    if(result.count("print-hashes")) {
+        printHashes = true;
+    }
+
     action = result["action"].as<std::string>();
 
     try {
@@ -212,7 +218,7 @@ int main(int argc, char* argv[])
     }
 
     auto tool = pcktool::PckTool({pack, action, files, output, removePrefix, godotMajor,
-        godotMinor, godotPatch, fileCommands, filter, reducedVerbosity});
+        godotMinor, godotPatch, fileCommands, filter, reducedVerbosity, printHashes});
 
     return tool.Run();
 }

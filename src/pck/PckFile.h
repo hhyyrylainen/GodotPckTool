@@ -54,7 +54,7 @@ public:
     //! \brief Extracts the read contents to the outputPrefix
     bool Extract(const std::string& outputPrefix, bool printExtracted);
 
-    void PrintFileList(bool includeSize = true);
+    void PrintFileList(bool printHashes, bool includeSize = true);
 
     void AddFile(ContainedFile&& file);
 
