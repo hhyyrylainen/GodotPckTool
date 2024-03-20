@@ -2,8 +2,11 @@
 
 
 # md5 project doesn't use cmake, so here's a basic definition
-include(TestBigEndian)
-TEST_BIG_ENDIAN(MD5_BIG_ENDIAN)
+if(CMAKE_CXX_BYTE_ORDER STREQUAL "BIG_ENDIAN")
+  set(MD5_BIG_ENDIAN 1)
+else()
+  set(MD5_BIG_ENDIAN 0)
+endif()
 
 configure_file("MD5-conf/conf.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/MD5-conf/conf.h")
 
