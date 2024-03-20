@@ -132,7 +132,7 @@ bool PckFile::Save()
     }
 
     // Alignment is used with Godot 4 .pck files
-    if(FormatVersion >= 2) {
+    if(FormatVersion >= 2 && Alignment < 1) {
         Alignment = 32;
     }
 
@@ -200,7 +200,9 @@ bool PckFile::Save()
         // MD5 is not calculated yet, so this writes garbage but this will be fixed later
         File->write(reinterpret_cast<const char*>(entry.MD5.data()), sizeof(entry.MD5));
 
-        Write32(entry.Flags);
+        if(FormatVersion >= 2) {
+            Write32(entry.Flags);
+        }
     }
 
     // Align
@@ -249,6 +251,7 @@ bool PckFile::Save()
         } else {
             // Offsets are now relative to the files block
             entry.Offset = offset - filesStart;
+            std::cout << entry.Path << " at offset: " << entry.Offset << "\n";
         }
     }
 

@@ -18,7 +18,7 @@ constexpr uint32_t PACK_DIR_ENCRYPTED = 1;
 
 // Highest pck version supported by this tool
 constexpr int MAX_SUPPORTED_PCK_VERSION_LOAD = 2;
-constexpr int MAX_SUPPORTED_PCK_VERSION_SAVE = 1;
+constexpr int MAX_SUPPORTED_PCK_VERSION_SAVE = 2;
 
 constexpr int GODOT_3_PCK_VERSION = 1;
 constexpr int GODOT_4_PCK_VERSION = 2;
