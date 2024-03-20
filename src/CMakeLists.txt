@@ -8,6 +8,7 @@ add_library(pck
   )
 
 target_link_libraries(pck PUBLIC)
+target_link_libraries(pck PRIVATE md5)
 
 set_target_properties(pck PROPERTIES
   CXX_STANDARD 17

@@ -4,3 +4,6 @@
 [submodule "third_party/json"]
 	path = third_party/json
 	url = https://github.com/nlohmann/json.git
+[submodule "third_party/MD5"]
+	path = third_party/MD5
+	url = https://github.com/CommanderBubble/MD5.git

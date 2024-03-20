@@ -39,7 +39,7 @@ public:
     };
 
 public:
-    explicit PckFile(const std::string& path);
+    explicit PckFile(std::string  path);
     PckFile(PckFile&& other) = delete;
     PckFile(const PckFile& other) = delete;
 
@@ -98,6 +98,8 @@ private:
     void Write32(uint32_t value);
     void Write64(uint64_t value);
 
+    void PadToAlignment();
+
 private:
     std::string Path;
     std::optional<std::fstream> File;
@@ -117,6 +119,8 @@ private:
 
     uint32_t Flags = 0;
     uint64_t FileOffsetBase = 0;
+
+    int Alignment = 0;
 
     //! Add trailing null bytes to the length of a path until it is a multiple of this size
     size_t PadPathsToMultipleWithNULLS = 4;

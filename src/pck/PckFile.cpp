@@ -3,10 +3,13 @@
 
 #include <filesystem>
 #include <iostream>
+#include <utility>
+
+#include "md5.h"
 
 using namespace pcktool;
 // ------------------------------------ //
-PckFile::PckFile(const std::string& path) : Path(path) {}
+PckFile::PckFile(std::string path) : Path(std::move(path)) {}
 // ------------------------------------ //
 bool PckFile::Load()
 {
@@ -46,7 +49,7 @@ bool PckFile::Load()
         return false;
     }
 
-    if(FormatVersion == 2) {
+    if(FormatVersion >= 2) {
         Flags = Read32();
         FileOffsetBase = Read64();
     }
@@ -87,6 +90,8 @@ bool PckFile::Load()
 
         if(FormatVersion == 2) {
             entry.Flags = Read32();
+
+            // TODO: check encrypted flag
         }
 
         entry.GetData = [offset = entry.Offset, size = entry.Size, this]() {
@@ -126,6 +131,11 @@ bool PckFile::Save()
         return false;
     }
 
+    // Alignment is used with Godot 4 .pck files
+    if(FormatVersion >= 2) {
+        Alignment = 32;
+    }
+
     File->exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
     // Header
@@ -139,8 +149,21 @@ bool PckFile::Save()
     Write32(MinorGodotVersion);
     Write32(PatchGodotVersion);
 
+    std::fstream::off_type baseOffsetLocation = 0;
+
+    if(FormatVersion >= 2) {
+
+        // Pck flags
+        uint32_t flags = 0;
+        Write32(flags);
+
+        // File entry base offset (dummy value for now)
+        baseOffsetLocation = File->tellg();
+        Write64(0);
+    }
+
     // Reserved part
-    for(int i = 0; i < 16; i++) {
+    for(int i = 0; i < 16; ++i) {
         Write32(0);
     }
 
@@ -175,21 +198,25 @@ bool PckFile::Save()
         Write64(entry.Size);
 
         // MD5 is not calculated yet, so this writes garbage but this will be fixed later
-        // Apparently this is not needed at all as the godot packer never calculates the md5
         File->write(reinterpret_cast<const char*>(entry.MD5.data()), sizeof(entry.MD5));
+
+        Write32(entry.Flags);
     }
 
     // Align
-    int alignment = 0;
+    PadToAlignment();
 
-    // TODO: add command line flag to enable alignment
+    const auto filesStart = File->tellg();
 
-    if(alignment >= 4) {
-        while(File->tellg() % alignment != 0) {
-            uint8_t null = 0;
-            File->write(reinterpret_cast<const char*>(&null), sizeof(null));
-        }
+
+    if(FormatVersion >= 2) {
+
+        // Set a valid offset now for the files start
+        File->seekg(baseOffsetLocation);
+        Write64(filesStart);
     }
+
+    File->seekg(filesStart);
 
     // Then write the data
     for(auto& [_, entry] : Contents) {
@@ -208,17 +235,35 @@ bool PckFile::Save()
 
         File->write(data.data(), entry.Size);
 
+        // Update MD5
+        // The md5 library assumes the write target size here
+        static_assert(sizeof(entry.MD5) == 16);
+        md5::md5_t(data.data(), data.size(), entry.MD5.data());
+
+        PadToAlignment();
+
         // Update the entry offset for writing
-        entry.Offset = offset;
+        if(FormatVersion < 2) {
+
+            entry.Offset = offset;
+        } else {
+            // Offsets are now relative to the files block
+            entry.Offset = offset - filesStart;
+        }
     }
 
 
-    // And finally fix up the files
+    // And finally fix up the file headers
     for(const auto& [_, entry] : Contents) {
         File->seekg(continueWriteIndex[&entry]);
         Write64(entry.Offset);
 
-        // MD5 is not calculated so no need to write that here
+        // Don't need to write this again, but for simplicity this can be written again to
+        // align the hash to the right spot
+        Write64(entry.Size);
+
+        // Update MD5 now that it is calculated
+        File->write(reinterpret_cast<const char*>(entry.MD5.data()), sizeof(entry.MD5));
     }
 
     File->close();
@@ -459,4 +504,18 @@ void PckFile::Write32(uint32_t value)
 void PckFile::Write64(uint64_t value)
 {
     File->write(reinterpret_cast<char*>(&value), sizeof(value));
+}
+
+void PckFile::PadToAlignment()
+{
+    if(Alignment <= 0)
+        return;
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "LoopDoesntUseConditionVariableInspection"
+    while((File->tellg() % Alignment) != 0) {
+        uint8_t null = 0;
+        File->write(reinterpret_cast<const char*>(&null), sizeof(null));
+    }
+#pragma clang diagnostic pop
 }
