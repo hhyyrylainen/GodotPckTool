@@ -251,7 +251,6 @@ bool PckFile::Save()
         } else {
             // Offsets are now relative to the files block
             entry.Offset = offset - filesStart;
-            std::cout << entry.Path << " at offset: " << entry.Offset << "\n";
         }
     }
 
