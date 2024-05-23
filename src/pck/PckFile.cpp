@@ -94,7 +94,11 @@ bool PckFile::Load()
         if(FormatVersion == 2) {
             entry.Flags = Read32();
 
-            // TODO: check encrypted flag
+            if(entry.Flags & PCK_FILE_ENCRYPTED) {
+                std::cout << "WARNING: pck file (" << entry.Path
+                          << ") is marked as encrypted, decoding the encryption is not "
+                             "implemented\n";
+            }
         }
 
         entry.GetData = [offset = entry.Offset, size = entry.Size, this]() {
