@@ -6,7 +6,9 @@ A standalone executable for unpacking and packing Godot .pck files.
 Command line usage
 ------------------
 
-For these you just need the GodotPckTool executable. Available from the releases page.
+For these you just need the GodotPckTool executable. Available from
+the releases page. Or see the end of this file for building
+instructions.
 
 Note: if you don't install it on Linux you need to either use the full
 path or put it in a folder and run it as `./godotpcktool` similarly to
