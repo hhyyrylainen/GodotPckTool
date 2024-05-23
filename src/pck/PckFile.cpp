@@ -476,8 +476,10 @@ std::string PckFile::ReadContainedFileContents(uint64_t offset, uint64_t size)
     DataReader->seekg(offset);
     DataReader->read(result.data(), size);
 
-    if(!DataReader->good())
-        throw std::runtime_error("files for entry contents failed");
+    if(!DataReader->good()) {
+        throw std::runtime_error("reading file entry content failed (specified offset or data "
+                                 "length is too large, pck may be corrupt or malformed)");
+    }
 
     return result;
 }
