@@ -2,6 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/third_party/MD5" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/third_party/cxxopts" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/third_party/json" vcs="Git" />
   </component>
