@@ -228,6 +228,10 @@ int main(int argc, char* argv[])
 
         try {
             auto file = std::ifstream(commandFile);
+
+            if(!file.good())
+                throw std::runtime_error("failed to open the command file");
+
             std::stringstream buffer;
             buffer << file.rdbuf();
 
