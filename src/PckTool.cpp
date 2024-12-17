@@ -171,8 +171,16 @@ bool PckTool::BuildFileList()
     // Handle json commands
     if(Opts.FileCommands.is_array()) {
         for(const auto& entry : Opts.FileCommands) {
-            Files.push_back(
-                {entry["file"].get<std::string>(), entry["target"].get<std::string>()});
+            try {
+                Files.push_back(
+                    {entry["file"].get<std::string>(), entry["target"].get<std::string>()});
+            } catch(const std::exception& e) {
+                std::cout << "ERROR: unexpected JSON object format in array: " << e.what()
+                          << "\n";
+                std::cout << "Incorrect object:\n";
+                std::cout << entry << "\n";
+                return false;
+            }
         }
     }
 
