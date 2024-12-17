@@ -64,6 +64,7 @@ int main(int argc, char* argv[])
         ("o,output", "Target folder for extracting", cxxopts::value<std::string>())
         ("remove-prefix", "Remove a prefix from files added to a pck",
             cxxopts::value<std::string>())
+        ("command-file", "Read JSON commands from the specified file", cxxopts::value<std::string>())
         ("set-godot-version", "Set the godot version to use when creating a new pck",
             cxxopts::value<std::string>()->default_value("3.0.0"))
         ("min-size-filter", "Set minimum size for files to include in operation",
@@ -116,6 +117,7 @@ int main(int argc, char* argv[])
     std::vector<std::string> files;
     std::string output;
     std::string removePrefix;
+    std::string commandFile;
     int godotMajor, godotMinor, godotPatch;
     nlohmann::json fileCommands;
     pcktool::FileFilter filter;
@@ -142,6 +144,10 @@ int main(int argc, char* argv[])
 
     if(result.count("pack")) {
         pack = result["pack"].as<std::string>();
+    }
+
+    if(result.count("command-file")) {
+        commandFile = result["command-file"].as<std::string>();
     }
 
     if(result.count("min-size-filter")) {
@@ -213,6 +219,36 @@ int main(int argc, char* argv[])
             fileCommands = nlohmann::json::parse(data);
         } catch(const nlohmann::json::parse_error& e) {
             std::cout << "ERROR: invalid json: " << e.what() << "\n";
+            return 1;
+        }
+    }
+
+    if(!commandFile.empty()) {
+        std::cout << "Reading JSON commands from file: " << commandFile << "\n";
+
+        try {
+            auto file = std::ifstream(commandFile);
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+
+            const auto parsed = nlohmann::json::parse(buffer);
+
+            if(!parsed.is_array()) {
+                throw std::runtime_error(
+                    "expected JSON file to contain a single JSON array with objects in it");
+            }
+
+            if(!fileCommands.is_array()) {
+                // If didn't read stdin commands, make the result array now
+                fileCommands = nlohmann::json::array();
+            }
+
+            for(const auto& entry : parsed) {
+                fileCommands.push_back(entry);
+            }
+
+        } catch(const std::exception& e) {
+            std::cout << "ERROR: invalid json file: " << e.what() << "\n";
             return 1;
         }
     }
