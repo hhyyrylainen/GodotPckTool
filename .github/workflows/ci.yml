@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     name: Linux (Release)
 
     steps:
@@ -34,7 +34,7 @@ jobs:
           path: build/src/godotpcktool
 
   windows:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     name: Windows (MinGW, Release)
 
     steps:

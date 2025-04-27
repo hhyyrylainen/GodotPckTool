@@ -289,4 +289,4 @@ make compile-podman
 ```
 
 Due to the use of C++ 17 and non-ancient cmake version, the oldest
-working Ubuntu LTS is currently 20.04.
+working Ubuntu LTS is currently 22.04 (as 20.04 has ended support).
