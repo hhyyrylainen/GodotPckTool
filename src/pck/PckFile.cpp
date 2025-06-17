@@ -416,14 +416,15 @@ bool PckFile::Extract(const std::string& outputPrefix, bool printExtracted)
         if(printExtracted)
             std::cout << "Extracting " << path << " to " << targetFile << "\n";
 
-        try {
-            std::filesystem::create_directories(targetFolder);
-        } catch(const std::filesystem::filesystem_error& e) {
-            std::cout << "ERROR: creating target directory (" << targetFolder
-                      << "): " << e.what() << "\n";
-            return false;
+        if(!targetFolder.empty()) {
+            try {    
+                std::filesystem::create_directories(targetFolder);
+            } catch(const std::filesystem::filesystem_error& e) {
+                std::cout << "ERROR: creating target directory (" << targetFolder
+                        << "): " << e.what() << "\n";
+                return false;
+            }
         }
-
         std::ofstream writer(
             targetFile.string(), std::ios::trunc | std::ios::out | std::ios::binary);
 
