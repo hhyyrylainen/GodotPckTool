@@ -416,7 +416,7 @@ bool PckFile::Extract(const std::string& outputPrefix, bool printExtracted)
         if(printExtracted)
             std::cout << "Extracting " << path << " to " << targetFile << "\n";
 
-        if(targetFolder.empty()) {
+        if(!targetFolder.empty()) {
             try {    
                 std::filesystem::create_directories(targetFolder);
             } catch(const std::filesystem::filesystem_error& e) {
