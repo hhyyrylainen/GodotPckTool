@@ -1,0 +1,89 @@
+###############################################################################
+# Basic Makefile for the MD5 library.
+###############################################################################
+
+# default root installation directory
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+srcdir = @srcdir@
+
+libdir = @libdir@
+includedir = @includedir@
+
+# default c++-compiler
+CXX = @CXX@
+
+A_OUT = aout@EXEEXT@
+
+MODULE	= md5
+LIBRARY	= lib$(MODULE).a
+
+# now construct our build and install targets
+BUILD_ALL = $(LIBRARY)
+INSTALL_LIB = $(LIBRARY)
+
+ifneq ($(CXXFLAGS), )
+$(info Using custom $(CXX) flags)
+else
+CXXFLAGS = @CXXFLAGS@
+endif
+
+LDFLAGS = @LDFLAGS@
+
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+###############################################################################
+# End of system configuration section.
+###############################################################################
+
+HFLS = src/md5.h
+OBJS = src/md5.o
+
+TEST = tests/$(MODULE)_t
+
+all : $(BUILD_ALL)
+
+clean :
+	rm -f $(A_OUT) core *.o *.t
+	rm -f $(LIBRARY) $(TEST)
+	rm -f src/*.o
+	rm -f tests/*.o tests/*.t
+
+buildclean : clean
+	rm -f confdefs.h config.status config.log config.cache conf.*
+	rm -f configure.lineno configure
+	rm -rf autom4te.cache
+	rm -f Makefile
+
+distclean : uninstall buildclean
+
+installincs : $(HFLS)
+	$(INSTALL_DATA) $(HFLS) $(includedir)
+
+installlib : $(INSTALL_LIB)
+	$(INSTALL_DATA) $(LIBRARY) $(libdir)
+	@RANLIB@ $(libdir)/$(LIBRARY)
+
+install : installincs installlib
+
+uninstallincs :
+	rm -f $(includedir)/$(HFLS)
+
+uninstalllib :
+	rm -f $(libdir)/$(LIBRARY)
+
+uninstall : uninstallincs uninstalllib
+
+$(LIBRARY) : $(OBJS) $(NORMAL_OBJS)
+	ar cr $@ $?
+	@RANLIB@ $@
+
+check : $(TEST)
+	./$(TEST)
+
+$(TEST) : $(TEST).o $(LIBRARY)
+	rm -f $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(A_OUT) $(TEST).o $(LIBRARY)
+	mv $(A_OUT) $@
