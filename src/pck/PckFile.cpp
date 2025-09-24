@@ -33,6 +33,8 @@ bool PckFile::Load()
     if(!DataReader || !DataReader->good())
         throw std::runtime_error("second data reader opening failed");
 
+    const auto pckStart = DataReader->tellg();
+
     uint32_t magic = Read32();
 
     if(magic != PCK_HEADER_MAGIC) {
@@ -62,12 +64,32 @@ bool PckFile::Load()
         return false;
     }
 
-    // Reserved
-    for(int i = 0; i < 16; i++) {
-        Read32();
+    if(Flags & PCK_FILE_SPARSE_BUNDLE) {
+        std::cout << "Warning: Sparse pck detected, this is unlikely to work!\n";
     }
 
-    // Now we are at the file section
+    if(FormatVersion >= 3 || (FormatVersion == 2 && Flags & PCK_FILE_RELATIVE_BASE)) {
+        FileOffsetBase += pckStart;
+    }
+
+    if(FormatVersion >= 3) {
+        // New feature: offset to the directory
+        DirectoryOffset = Read64();
+
+        // Seek to the directory to keep the following logic the same (this skips the reserved
+        // part of the header)
+        File->seekg(pckStart + static_cast<std::streampos>(
+                                   DirectoryOffset)); // NOLINT(*-narrowing-conversions)
+    } else {
+        // V2 has the directory immediately after the header
+        // Reserved
+        for(int i = 0; i < 16; i++) {
+            Read32();
+        }
+    }
+
+
+    // Now we are at the file directory section
     const auto files = Read32();
 
     size_t excluded = 0;
@@ -91,13 +113,18 @@ bool PckFile::Load()
 
         File->read(reinterpret_cast<char*>(entry.MD5.data()), sizeof(entry.MD5));
 
-        if(FormatVersion == 2) {
+        if(FormatVersion >= 2) {
             entry.Flags = Read32();
 
             if(entry.Flags & PCK_FILE_ENCRYPTED) {
                 std::cout << "WARNING: pck file (" << entry.Path
                           << ") is marked as encrypted, decoding the encryption is not "
                              "implemented\n";
+            }
+
+            if(entry.Flags & PCK_FILE_DELETED) {
+                std::cout << "Pck file is marked as removed (but still processing it): "
+                          << entry.Path << "\n";
             }
         }
 
@@ -157,16 +184,30 @@ bool PckFile::Save()
     Write32(PatchGodotVersion);
 
     std::fstream::off_type baseOffsetLocation = 0;
+    std::fstream::off_type directoryOffsetLocation = 0;
+
+    const bool useRelativeOffset = Flags & PCK_FILE_RELATIVE_BASE || FormatVersion >= 3;
 
     if(FormatVersion >= 2) {
 
         // Pck flags
         uint32_t flags = 0;
+
+        if(useRelativeOffset) {
+            flags |= PCK_FILE_RELATIVE_BASE;
+        }
+
         Write32(flags);
 
         // File entry base offset (dummy value for now)
         baseOffsetLocation = File->tellg();
         Write64(0);
+
+        if(FormatVersion >= 3) {
+            // Offset to the directory
+            directoryOffsetLocation = File->tellg();
+            Write64(0);
+        }
     }
 
     // Reserved part
@@ -174,13 +215,27 @@ bool PckFile::Save()
         Write32(0);
     }
 
+    // In Godot 4.5 the directory is written at the end of the file, but that is not an
+    // absolutely mandatory requirement, so we can keep writing the directory here before the
+    // file data
+
+    const auto remember = File->tellg();
+
+    if(FormatVersion >= 3) {
+        // Write start of the directory variable
+        File->seekg(directoryOffsetLocation);
+        Write64(remember);
+    }
+
+    File->seekg(remember);
+
     // Things are filtered before adding to Contents, so we don't do any filtering here
     // File count
     Write32(Contents.size());
 
     std::map<const ContainedFile*, std::fstream::pos_type> continueWriteIndex;
 
-    // First write blank file entries as placeholders
+    // First, write blank file entries as placeholders
     for(const auto& [_, entry] : Contents) {
 
         // When the path is exactly the right size, this results in 4 extra NULLs
@@ -220,7 +275,9 @@ bool PckFile::Save()
 
     if(FormatVersion >= 2) {
 
-        // Set a valid offset now for the files start
+        // Set a valid offset now for the files start.
+        // Even with useRelativeOffset we don't need to adjust here as we always write the
+        // header at offset 0 of the file.
         File->seekg(baseOffsetLocation);
         Write64(filesStart);
     }
@@ -229,6 +286,10 @@ bool PckFile::Save()
 
     // Then write the data
     for(auto& [_, entry] : Contents) {
+        // Pad file data to the alignment (doing it here ensures it is correct for the first
+        // file as well)
+        PadToAlignment();
+
         uint64_t offset = File->tellg();
 
         // Write the data here
@@ -242,14 +303,12 @@ bool PckFile::Save()
             return false;
         }
 
-        File->write(data.data(), entry.Size);
+        File->write(data.data(), entry.Size); // NOLINT(*-narrowing-conversions)
 
         // Update MD5
         // The md5 library assumes the write target size here
         static_assert(sizeof(entry.MD5) == MD5_SIZE);
         md5::md5_t(data.data(), data.size(), entry.MD5.data());
-
-        PadToAlignment();
 
         // Update the entry offset for writing
         if(FormatVersion < 2) {
@@ -261,6 +320,8 @@ bool PckFile::Save()
         }
     }
 
+    // Non-embedded pck doesn't have to be aligned up to end at Alignment size
+    // PadToAlignment();
 
     // And finally fix up the file headers
     for(const auto& [_, entry] : Contents) {
@@ -417,11 +478,11 @@ bool PckFile::Extract(const std::string& outputPrefix, bool printExtracted)
             std::cout << "Extracting " << path << " to " << targetFile << "\n";
 
         if(!targetFolder.empty()) {
-            try {    
+            try {
                 std::filesystem::create_directories(targetFolder);
             } catch(const std::filesystem::filesystem_error& e) {
                 std::cout << "ERROR: creating target directory (" << targetFolder
-                        << "): " << e.what() << "\n";
+                          << "): " << e.what() << "\n";
                 return false;
             }
         }
@@ -501,6 +562,9 @@ void PckFile::SetGodotVersion(uint32_t major, uint32_t minor, uint32_t patch)
     } else if(MajorGodotVersion >= 4) {
 
         FormatVersion = GODOT_4_PCK_VERSION;
+
+        if(MinorGodotVersion >= 5)
+            FormatVersion = GODOT_4_5_PCK_VERSION;
     }
 }
 // ------------------------------------ //

@@ -16,13 +16,18 @@ namespace pcktool {
 constexpr uint32_t PCK_HEADER_MAGIC = 0x43504447;
 constexpr uint32_t PACK_DIR_ENCRYPTED = 1 << 0;
 constexpr uint32_t PCK_FILE_ENCRYPTED = 1 << 0;
+constexpr uint32_t PCK_FILE_DELETED = 1 << 1;
+
+constexpr uint32_t PCK_FILE_RELATIVE_BASE = 1 << 1;
+constexpr uint32_t PCK_FILE_SPARSE_BUNDLE = 1 << 2;
 
 // Highest pck version supported by this tool
-constexpr int MAX_SUPPORTED_PCK_VERSION_LOAD = 2;
-constexpr int MAX_SUPPORTED_PCK_VERSION_SAVE = 2;
+constexpr int MAX_SUPPORTED_PCK_VERSION_LOAD = 3;
+constexpr int MAX_SUPPORTED_PCK_VERSION_SAVE = 3;
 
 constexpr int GODOT_3_PCK_VERSION = 1;
 constexpr int GODOT_4_PCK_VERSION = 2;
+constexpr int GODOT_4_5_PCK_VERSION = 3;
 
 //! \brief A single pck file object. Handles reading and writing
 //!
@@ -111,6 +116,7 @@ private:
     //! 0 = Godot 1.x, 2.x
     //! 1 = Godot 3.x
     //! 2 = Godot 4.x
+    //! 3 = Godot 4.5
     uint32_t FormatVersion = 1;
 
     // Loaded version info from a pack
@@ -120,6 +126,8 @@ private:
 
     uint32_t Flags = 0;
     uint64_t FileOffsetBase = 0;
+
+    uint64_t DirectoryOffset = 0;
 
     int Alignment = 0;
 
