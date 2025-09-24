@@ -81,7 +81,7 @@ public:
     //! \brief Set the specified Godot engine version this pck says it is
     //!
     //! This will update the .pck file format version to also match the engine version if
-    //! necessary (for example Godot 4 uses pck version 2)
+    //! necessary (for example, Godot 4 uses pck version 2)
     void SetGodotVersion(uint32_t major, uint32_t minor, uint32_t patch);
 
     //! \brief Sets a filter for entries to be added to this object
@@ -117,7 +117,7 @@ private:
     //! 1 = Godot 3.x
     //! 2 = Godot 4.x
     //! 3 = Godot 4.5
-    uint32_t FormatVersion = 1;
+    uint32_t FormatVersion = GODOT_4_PCK_VERSION;
 
     // Loaded version info from a pack
     uint32_t MajorGodotVersion = 0;

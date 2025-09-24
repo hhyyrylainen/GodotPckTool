@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
             cxxopts::value<std::string>())
         ("command-file", "Read JSON commands from the specified file", cxxopts::value<std::string>())
         ("set-godot-version", "Set the godot version to use when creating a new pck",
-            cxxopts::value<std::string>()->default_value("3.0.0"))
+            cxxopts::value<std::string>()->default_value("4.0.0"))
         ("min-size-filter", "Set minimum size for files to include in operation",
             cxxopts::value<uint64_t>())
         ("max-size-filter", "Set maximum size for files to include in operation",
