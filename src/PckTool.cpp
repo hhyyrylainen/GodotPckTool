@@ -22,6 +22,8 @@ int PckTool::Run()
         if(!pck)
             return 2;
 
+        std::cout << "Pck version: " << pck->GetFormatVersion()
+                  << ", Godot: " << pck->GetGodotVersion() << "\n";
         std::cout << "Contents of '" << Opts.Pack << "':\n";
 
         pck->PrintFileList(Opts.PrintHashes);

@@ -97,6 +97,17 @@ public:
         return Path;
     }
 
+    uint32_t GetFormatVersion() const
+    {
+        return FormatVersion;
+    }
+
+    std::string GetGodotVersion() const
+    {
+        return std::to_string(MajorGodotVersion) + "." + std::to_string(MinorGodotVersion) +
+               "." + std::to_string(PatchGodotVersion);
+    }
+
 private:
     // These need swaps on non-little endian machine
     uint32_t Read32();
