@@ -28,7 +28,7 @@ jobs:
         run: |
           godotpcktool --help
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: godotpcktool-linux-x86_64-glibc2.31
           path: build/src/godotpcktool
@@ -55,7 +55,7 @@ jobs:
           cmake --build build
           sudo cmake --build build --target install
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: godotpcktool-windows-x86_64
           path: build/src/godotpcktool.exe
