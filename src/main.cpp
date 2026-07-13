@@ -86,6 +86,7 @@ int main(int argc, char* argv[])
         ("print-hashes", "Print hashes of contained files in the .pck")
         ("v,version", "Print version and quit")
         ("h,help", "Print help and quit")
+        ("no-res-prefix", "Don't add res:// prefix to files added to a pck")
         ;
     // clang-format on
 
@@ -123,6 +124,7 @@ int main(int argc, char* argv[])
     pcktool::FileFilter filter;
     bool reducedVerbosity = false;
     bool printHashes = false;
+    bool noResPrefix = false;
 
     if(result.count("file")) {
         files = result["file"].as<decltype(files)>();
@@ -180,6 +182,10 @@ int main(int argc, char* argv[])
 
     if(result.count("print-hashes")) {
         printHashes = true;
+    }
+
+    if(result.count("no-res-prefix")) {
+        noResPrefix = true;
     }
 
     action = result["action"].as<std::string>();
@@ -257,8 +263,9 @@ int main(int argc, char* argv[])
         }
     }
 
-    auto tool = pcktool::PckTool({pack, action, files, output, removePrefix, godotMajor,
-        godotMinor, godotPatch, fileCommands, filter, reducedVerbosity, printHashes});
+    auto tool =
+        pcktool::PckTool({pack, action, files, output, removePrefix, godotMajor, godotMinor,
+            godotPatch, fileCommands, filter, reducedVerbosity, printHashes, noResPrefix});
 
     return tool.Run();
 }

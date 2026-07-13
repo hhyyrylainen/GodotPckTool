@@ -42,6 +42,7 @@ public:
 
         bool ReducedVerbosity;
         bool PrintHashes;
+        bool NoResPrefix;
     };
 
 public:

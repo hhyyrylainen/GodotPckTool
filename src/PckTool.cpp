@@ -98,6 +98,8 @@ int PckTool::Run()
             pck->SetGodotVersion(Opts.GodotMajor, Opts.GodotMinor, Opts.GodotPatch);
         }
 
+        pck->SetNoResPrefix(Opts.NoResPrefix);
+
         for(const auto& entry : Files) {
             if(!entry.Target.empty()) {
                 // Already known target for a single file

@@ -85,6 +85,7 @@ public:
     //! This will update the .pck file format version to also match the engine version if
     //! necessary (for example, Godot 4 uses pck version 2)
     void SetGodotVersion(uint32_t major, uint32_t minor, uint32_t patch);
+    void SetNoResPrefix(bool noResPrefix);
 
     //! \brief Sets a filter for entries to be added to this object
     //!
@@ -161,6 +162,7 @@ private:
     size_t PadPathsToMultipleWithNULLS = 4;
 
     std::map<std::string, ContainedFile> Contents;
+    bool NoResPrefix = false;
 
     //! Used in a bunch of operations to check if a file entry should be included or ignored
     std::function<bool(const ContainedFile&)> IncludeFilter;

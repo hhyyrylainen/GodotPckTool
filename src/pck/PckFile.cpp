@@ -458,6 +458,9 @@ std::string PckFile::PreparePckPath(std::string path, const std::string& stripPr
         path.erase(path.begin());
     }
 
+    if(NoResPrefix)
+        return path;
+
     return GODOT_RES_PATH + path;
 }
 // ------------------------------------ //
@@ -586,6 +589,11 @@ void PckFile::SetGodotVersion(uint32_t major, uint32_t minor, uint32_t patch)
             FormatVersion = GODOT_4_5_PCK_VERSION;
         }
     }
+}
+
+void PckFile::SetNoResPrefix(bool noResPrefix)
+{
+    NoResPrefix = noResPrefix;
 }
 // ------------------------------------ //
 uint32_t PckFile::Read32()

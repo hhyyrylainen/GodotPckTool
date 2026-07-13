@@ -64,7 +64,8 @@ The files are added with the specified paths on the command line, but
 with the prefix removed. So for example if there was a file called
 `extracted/example.png` and `extracted/subfolder/file.txt` and the
 above command was used, those files would get added to the pck as
-`res://example.png` and `res://subfolder/file.txt`.
+`res://example.png` and `res://subfolder/file.txt`. If you don't want
+the `res://` prefix to be added, you can use the flag `--no-res-prefix`.
 
 After adding files it is recommended to use the listing command to
 view the resulting data inside the pck to verify the expected actions
@@ -201,6 +202,17 @@ specifying the JSON commands.
 
 
 ### Advanced Options
+
+#### No res:// prefix
+
+When adding files to a pck, the `res://` prefix is added by default to the paths.
+To prevent this, use the `--no-res-prefix` flag:
+
+```sh
+godotpcktool NewPack.pck -a a some_file.txt --no-res-prefix
+```
+
+This will result in the file being saved as `some_file.txt` inside the pck instead of `res://some_file.txt`.
 
 #### Specifying Engine Version
 
