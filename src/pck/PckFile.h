@@ -22,12 +22,13 @@ constexpr uint32_t PCK_FILE_RELATIVE_BASE = 1 << 1;
 constexpr uint32_t PCK_FILE_SPARSE_BUNDLE = 1 << 2;
 
 // Highest pck version supported by this tool
-constexpr int MAX_SUPPORTED_PCK_VERSION_LOAD = 3;
-constexpr int MAX_SUPPORTED_PCK_VERSION_SAVE = 3;
+constexpr int MAX_SUPPORTED_PCK_VERSION_LOAD = 4;
+constexpr int MAX_SUPPORTED_PCK_VERSION_SAVE = 4;
 
 constexpr int GODOT_3_PCK_VERSION = 1;
 constexpr int GODOT_4_PCK_VERSION = 2;
 constexpr int GODOT_4_5_PCK_VERSION = 3;
+constexpr int GODOT_4_7_PCK_VERSION = 4;
 
 //! \brief A single pck file object. Handles reading and writing
 //!
@@ -40,6 +41,7 @@ public:
         uint64_t Size;
         std::array<uint8_t, 16> MD5 = {0};
         uint32_t Flags = 0;
+        std::string Salt;
 
         std::function<std::string()> GetData;
     };
@@ -97,6 +99,16 @@ public:
         return Path;
     }
 
+    inline const std::string& GetSalt() const
+    {
+        return Salt;
+    }
+
+    inline void SetSalt(const std::string& salt)
+    {
+        Salt = salt;
+    }
+
     uint32_t GetFormatVersion() const
     {
         return FormatVersion;
@@ -128,12 +140,15 @@ private:
     //! 1 = Godot 3.x
     //! 2 = Godot 4.x
     //! 3 = Godot 4.5
+    //! 4 = Godot 4.7
     uint32_t FormatVersion = GODOT_4_PCK_VERSION;
 
     // Loaded version info from a pack
     uint32_t MajorGodotVersion = 0;
     uint32_t MinorGodotVersion = 0;
     uint32_t PatchGodotVersion = 0;
+
+    std::string Salt;
 
     uint32_t Flags = 0;
     uint64_t FileOffsetBase = 0;

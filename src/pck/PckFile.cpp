@@ -76,6 +76,13 @@ bool PckFile::Load()
         // New feature: offset to the directory
         DirectoryOffset = Read64();
 
+        // NOTE: this code is not verified with a real Godot-generated .pck file
+        if(FormatVersion >= 4 && (Flags & PCK_FILE_SPARSE_BUNDLE) &&
+            (Flags & PACK_DIR_ENCRYPTED)) {
+            Salt.resize(32);
+            File->read(Salt.data(), 32);
+        }
+
         // Seek to the directory to keep the following logic the same (this skips the reserved
         // part of the header)
         File->seekg(pckStart + static_cast<std::streampos>(
@@ -115,6 +122,7 @@ bool PckFile::Load()
 
         if(FormatVersion >= 2) {
             entry.Flags = Read32();
+            entry.Salt = Salt;
 
             if(entry.Flags & PCK_FILE_ENCRYPTED) {
                 std::cout << "WARNING: pck file (" << entry.Path
@@ -191,7 +199,7 @@ bool PckFile::Save()
     if(FormatVersion >= 2) {
 
         // Pck flags
-        uint32_t flags = 0;
+        uint32_t flags = Flags;
 
         if(useRelativeOffset) {
             flags |= PCK_FILE_RELATIVE_BASE;
@@ -211,8 +219,17 @@ bool PckFile::Save()
     }
 
     // Reserved part
-    for(int i = 0; i < 16; ++i) {
-        Write32(0);
+    if(FormatVersion >= 4 && (Flags & PCK_FILE_SPARSE_BUNDLE) &&
+        (Flags & PACK_DIR_ENCRYPTED) && Salt.length() == 32) {
+        File->write(Salt.data(), 32);
+
+        for(int i = 0; i < 8; ++i) {
+            Write32(0);
+        }
+    } else {
+        for(int i = 0; i < 16; ++i) {
+            Write32(0);
+        }
     }
 
     // In Godot 4.5 the directory is written at the end of the file, but that is not an
@@ -563,8 +580,11 @@ void PckFile::SetGodotVersion(uint32_t major, uint32_t minor, uint32_t patch)
 
         FormatVersion = GODOT_4_PCK_VERSION;
 
-        if(MinorGodotVersion >= 5)
+        if(MinorGodotVersion >= 7) {
+            FormatVersion = GODOT_4_7_PCK_VERSION;
+        } else if(MinorGodotVersion >= 5) {
             FormatVersion = GODOT_4_5_PCK_VERSION;
+        }
     }
 }
 // ------------------------------------ //
