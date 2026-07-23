@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>GodotPckTool</AssemblyName>
     <RootNamespace>GodotPckTool</RootNamespace>
+    <NoWarn>SA1649,</NoWarn>
   </PropertyGroup>
 
 </Project>

@@ -180,7 +180,7 @@ public class PckFile : IDisposable
             return false;
         }
 
-        // We keep _readStream open for ReadContainedFileContents (there could be a finally block to close it here)
+        // We keep _readStream open for ReadContainedFileContents (there could be a "finally" block to close it here)
     }
 
     public void UseFileFilter(FileFilter filter)
