@@ -2,3 +2,5 @@
 /build/
 /build-podman/
 /install/
+bin/
+obj/
