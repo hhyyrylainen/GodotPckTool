@@ -59,3 +59,20 @@ jobs:
         with:
           name: godotpcktool-windows-x86_64
           path: build/src/godotpcktool.exe
+
+  csharp:
+    runs-on: ubuntu-24.04
+    name: C# Library Compile
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build C# Library
+        run: dotnet build GodotPckTool.CSharp/GodotPckTool.CSharp.csproj
+
+      - name: Build C# Tests
+        run: dotnet build GodotPckTool.CSharp.Tests/GodotPckTool.CSharp.Tests.csproj
