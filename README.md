@@ -3,6 +3,8 @@ Godot Pck Tool
 
 A standalone executable for unpacking and packing Godot .pck files.
 
+There is also a C# code library in this repo that can be used from C# code to interact with .pck files.
+
 Command line usage
 ------------------
 
