@@ -11,23 +11,23 @@ public sealed class PckFileTests : IDisposable
     /// </summary>
     private const string RealTestPckFile = "Projects/Thrive/builds/Thrive_1.2.0.0-alpha_linux_x11/Thrive.pck";
 
-    private readonly ITestOutputHelper _testOutputHelper;
-    private readonly string _testDir;
-    private readonly string _pckPath;
+    private readonly ITestOutputHelper testOutputHelper;
+    private readonly string testDir;
+    private readonly string pckPath;
 
     public PckFileTests(ITestOutputHelper testOutputHelper)
     {
-        _testOutputHelper = testOutputHelper;
-        _testDir = Path.Combine(Path.GetTempPath(), "GodotPckToolTests_" + Guid.NewGuid());
-        Directory.CreateDirectory(_testDir);
-        _pckPath = Path.Combine(_testDir, "test.pck");
+        this.testOutputHelper = testOutputHelper;
+        testDir = Path.Combine(Path.GetTempPath(), "GodotPckToolTests_" + Guid.NewGuid());
+        Directory.CreateDirectory(testDir);
+        pckPath = Path.Combine(testDir, "test.pck");
     }
 
     public void Dispose()
     {
-        if (Directory.Exists(_testDir))
+        if (Directory.Exists(testDir))
         {
-            Directory.Delete(_testDir, true);
+            Directory.Delete(testDir, true);
         }
     }
 
@@ -35,7 +35,7 @@ public sealed class PckFileTests : IDisposable
     public void TestCreateAndReadPck()
     {
         // 1. Create
-        using (var pck = new PckFile(_pckPath))
+        using (var pck = new PckFile(pckPath))
         {
             pck.SetGodotVersion(4, 3, 0);
 
@@ -51,10 +51,10 @@ public sealed class PckFileTests : IDisposable
             Assert.True(pck.Save());
         }
 
-        Assert.True(File.Exists(_pckPath));
+        Assert.True(File.Exists(pckPath));
 
         // 2. Read
-        using (var pck = new PckFile(_pckPath))
+        using (var pck = new PckFile(pckPath))
         {
             Assert.True(pck.Load());
             Assert.Equal(4u, pck.MajorGodotVersion);
@@ -73,14 +73,14 @@ public sealed class PckFileTests : IDisposable
     [Fact]
     public void TestPackAndExtractFolder()
     {
-        string sourceDir = Path.Combine(_testDir, "source");
+        string sourceDir = Path.Combine(testDir, "source");
         Directory.CreateDirectory(sourceDir);
         File.WriteAllText(Path.Combine(sourceDir, "file1.txt"), "Content 1");
         Directory.CreateDirectory(Path.Combine(sourceDir, "sub"));
         File.WriteAllText(Path.Combine(sourceDir, "sub", "file2.txt"), "Content 2");
 
         // 3. Pack up a folder
-        using (var pck = new PckFile(_pckPath))
+        using (var pck = new PckFile(pckPath))
         {
             pck.SetGodotVersion(4, 3, 0);
             Assert.True(pck.AddFilesFromFilesystem(sourceDir, sourceDir));
@@ -88,8 +88,8 @@ public sealed class PckFileTests : IDisposable
         }
 
         // 4. Extract the folder
-        string extractDir = Path.Combine(_testDir, "extracted");
-        using (var pck = new PckFile(_pckPath))
+        string extractDir = Path.Combine(testDir, "extracted");
+        using (var pck = new PckFile(pckPath))
         {
             Assert.True(pck.Load());
             Assert.True(pck.Extract(extractDir, false));
@@ -113,7 +113,7 @@ public sealed class PckFileTests : IDisposable
         if (!File.Exists(realPckPath))
         {
             // Skip test if file doesn't exist
-            _testOutputHelper.WriteLine($"Skipping test as PCK file doesn't exist: {realPckPath}");
+            testOutputHelper.WriteLine($"Skipping test as PCK file doesn't exist: {realPckPath}");
             return;
         }
 
@@ -122,9 +122,9 @@ public sealed class PckFileTests : IDisposable
         Assert.NotEmpty(pck.Contents);
 
         // Print some info to confirm it works
-        _testOutputHelper.WriteLine($"Loaded real PCK: {realPckPath}");
-        _testOutputHelper.WriteLine(
+        testOutputHelper.WriteLine($"Loaded real PCK: {realPckPath}");
+        testOutputHelper.WriteLine(
             $"Godot Version: {pck.MajorGodotVersion}.{pck.MinorGodotVersion}.{pck.PatchGodotVersion}");
-        _testOutputHelper.WriteLine($"File count: {pck.Contents.Count}");
+        testOutputHelper.WriteLine($"File count: {pck.Contents.Count}");
     }
 }
