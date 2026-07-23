@@ -1,15 +1,17 @@
+namespace GodotPckTool;
+
 using System.Security.Cryptography;
 using System.Text;
-
-namespace GodotPckTool;
 
 /// <summary>
 ///   A C# implementation of the Godot PCK file format.
 /// </summary>
 public class PckFile : IDisposable
 {
-    private Stream? _readStream;
-    private BinaryReader? _reader;
+    private readonly Lock readLock = new();
+
+    private Stream? readStream;
+    private BinaryReader? reader;
 
     public PckFile(string path)
     {
@@ -34,44 +36,45 @@ public class PckFile : IDisposable
     public Dictionary<string, ContainedFile> Contents { get; } = [];
     public Func<ContainedFile, bool>? IncludeFilter { get; set; }
 
-
     public bool Load(bool throwOnError = true)
     {
         Contents.Clear();
 
         try
         {
-            _readStream = File.Open(Path, FileMode.Open, FileAccess.Read, FileShare.Read);
-            _reader = new BinaryReader(_readStream, Encoding.UTF8, leaveOpen: true);
+            readStream = File.Open(Path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            reader = new BinaryReader(readStream, Encoding.UTF8, leaveOpen: true);
 
-            long pckStart = _readStream.Position;
+            long pckStart = readStream.Position;
 
-            uint magic = _reader.ReadUInt32();
+            uint magic = reader.ReadUInt32();
             if (magic != Constants.PckHeaderMagic)
             {
                 Console.WriteLine("ERROR: invalid magic number");
                 if (throwOnError)
                     throw new Exception("Invalid magic number");
+
                 return false;
             }
 
-            FormatVersion = _reader.ReadUInt32();
-            MajorGodotVersion = _reader.ReadUInt32();
-            MinorGodotVersion = _reader.ReadUInt32();
-            PatchGodotVersion = _reader.ReadUInt32();
+            FormatVersion = reader.ReadUInt32();
+            MajorGodotVersion = reader.ReadUInt32();
+            MinorGodotVersion = reader.ReadUInt32();
+            PatchGodotVersion = reader.ReadUInt32();
 
             if (FormatVersion > Constants.MaxSupportedPckVersionLoad)
             {
                 Console.WriteLine($"ERROR: pck is unsupported version: {FormatVersion}");
                 if (throwOnError)
                     throw new Exception("Unsupported pck version");
+
                 return false;
             }
 
             if (FormatVersion >= 2)
             {
-                Flags = _reader.ReadUInt32();
-                FileOffsetBase = _reader.ReadUInt64();
+                Flags = reader.ReadUInt32();
+                FileOffsetBase = reader.ReadUInt64();
             }
 
             if ((Flags & Constants.PackDirEncrypted) != 0)
@@ -79,6 +82,7 @@ public class PckFile : IDisposable
                 Console.WriteLine("ERROR: pck is encrypted");
                 if (throwOnError)
                     throw new Exception("Pck is encrypted");
+
                 return false;
             }
 
@@ -94,46 +98,46 @@ public class PckFile : IDisposable
 
             if (FormatVersion >= 3)
             {
-                DirectoryOffset = _reader.ReadUInt64();
+                DirectoryOffset = reader.ReadUInt64();
 
                 if (FormatVersion >= 4 && (Flags & Constants.PckFileSparseBundle) != 0 &&
                     (Flags & Constants.PackDirEncrypted) != 0)
                 {
-                    byte[] saltBytes = _reader.ReadBytes(32);
+                    byte[] saltBytes = reader.ReadBytes(32);
                     Salt = Encoding.UTF8.GetString(saltBytes);
                 }
 
-                _readStream.Seek((long)(pckStart + (long)DirectoryOffset), SeekOrigin.Begin);
+                readStream.Seek(pckStart + (long)DirectoryOffset, SeekOrigin.Begin);
             }
             else
             {
                 // Reserved
                 for (int i = 0; i < 16; i++)
                 {
-                    _reader.ReadUInt32();
+                    reader.ReadUInt32();
                 }
             }
 
-            uint fileCount = _reader.ReadUInt32();
+            uint fileCount = reader.ReadUInt32();
             uint excluded = 0;
 
             for (uint i = 0; i < fileCount; i++)
             {
-                uint pathLength = _reader.ReadUInt32();
-                byte[] pathBytes = _reader.ReadBytes((int)pathLength);
+                uint pathLength = reader.ReadUInt32();
+                byte[] pathBytes = reader.ReadBytes((int)pathLength);
                 string path = Encoding.UTF8.GetString(pathBytes).TrimEnd('\0');
 
                 ContainedFile entry = new()
                 {
                     Path = path,
-                    Offset = FileOffsetBase + _reader.ReadUInt64(),
-                    Size = _reader.ReadUInt64(),
-                    Md5 = _reader.ReadBytes(16)
+                    Offset = FileOffsetBase + reader.ReadUInt64(),
+                    Size = reader.ReadUInt64(),
+                    Md5 = reader.ReadBytes(16),
                 };
 
                 if (FormatVersion >= 2)
                 {
-                    entry.Flags = _reader.ReadUInt32();
+                    entry.Flags = reader.ReadUInt32();
                     entry.Salt = Salt;
 
                     if ((entry.Flags & Constants.PckFileEncrypted) != 0)
@@ -175,10 +179,8 @@ public class PckFile : IDisposable
 
             return false;
         }
-        finally
-        {
-            // We keep _readStream open for ReadContainedFileContents
-        }
+
+        // We keep _readStream open for ReadContainedFileContents (there could be a finally block to close it here)
     }
 
     public void UseFileFilter(FileFilter filter)
@@ -188,16 +190,16 @@ public class PckFile : IDisposable
 
     public byte[] ReadContainedFileContents(ulong offset, ulong size)
     {
-        if (_readStream == null)
+        if (readStream == null)
         {
             throw new Exception("Data reader is no longer open to read file contents");
         }
 
-        lock (_readStream)
+        lock (readLock)
         {
-            _readStream.Seek((long)offset, SeekOrigin.Begin);
+            readStream.Seek((long)offset, SeekOrigin.Begin);
             byte[] data = new byte[size];
-            int read = _readStream.Read(data, 0, (int)size);
+            int read = readStream.Read(data, 0, (int)size);
             if ((ulong)read != size)
             {
                 throw new Exception(
@@ -221,147 +223,152 @@ public class PckFile : IDisposable
         try
         {
             using (var writeStream = File.Open(tmpWrite, FileMode.Create, FileAccess.Write, FileShare.None))
-            using (var writer = new BinaryWriter(writeStream, Encoding.UTF8, leaveOpen: false))
             {
-                if (FormatVersion >= 2 && Alignment < 1)
+                using (var writer = new BinaryWriter(writeStream, Encoding.UTF8, leaveOpen: false))
                 {
-                    Alignment = 32;
-                }
-
-                // Header
-                writer.Write(Constants.PckHeaderMagic);
-                writer.Write(FormatVersion);
-
-                // Godot version
-                writer.Write(MajorGodotVersion);
-                writer.Write(MinorGodotVersion);
-                writer.Write(PatchGodotVersion);
-
-                long baseOffsetLocation = 0;
-                long directoryOffsetLocation = 0;
-
-                bool useRelativeOffset = (Flags & Constants.PckFileRelativeBase) != 0 || FormatVersion >= 3;
-
-                if (FormatVersion >= 2)
-                {
-                    uint flags = Flags;
-                    if (useRelativeOffset)
+                    if (FormatVersion >= 2 && Alignment < 1)
                     {
-                        flags |= Constants.PckFileRelativeBase;
+                        Alignment = 32;
                     }
 
-                    writer.Write(flags);
+                    // Header
+                    writer.Write(Constants.PckHeaderMagic);
+                    writer.Write(FormatVersion);
 
-                    baseOffsetLocation = writeStream.Position;
-                    writer.Write((ulong)0);
+                    // Godot version
+                    writer.Write(MajorGodotVersion);
+                    writer.Write(MinorGodotVersion);
+                    writer.Write(PatchGodotVersion);
 
-                    if (FormatVersion >= 3)
-                    {
-                        directoryOffsetLocation = writeStream.Position;
-                        writer.Write((ulong)0);
-                    }
-                }
+                    long baseOffsetLocation = 0;
+                    long directoryOffsetLocation = 0;
 
-                // Reserved
-                if (FormatVersion >= 4 && (Flags & Constants.PckFileSparseBundle) != 0 &&
-                    (Flags & Constants.PackDirEncrypted) != 0 && Salt.Length == 32)
-                {
-                    writer.Write(Encoding.UTF8.GetBytes(Salt));
-                    for (int i = 0; i < 8; i++) writer.Write((uint)0);
-                }
-                else
-                {
-                    for (int i = 0; i < 16; i++) writer.Write((uint)0);
-                }
-
-                long remember = writeStream.Position;
-
-                if (FormatVersion >= 3)
-                {
-                    writeStream.Seek(directoryOffsetLocation, SeekOrigin.Begin);
-                    writer.Write((ulong)remember);
-                    writeStream.Seek(remember, SeekOrigin.Begin);
-                }
-
-                writer.Write((uint)Contents.Count);
-
-                Dictionary<ContainedFile, long> continueWriteIndex = [];
-
-                foreach (var entry in Contents.Values)
-                {
-                    byte[] pathBytes = Encoding.UTF8.GetBytes(entry.Path);
-                    int pathToWriteSize = pathBytes.Length +
-                                          (PadPathsToMultipleWithNulls -
-                                           (pathBytes.Length % PadPathsToMultipleWithNulls));
-                    int padding = pathToWriteSize - pathBytes.Length;
-
-                    writer.Write((uint)pathToWriteSize);
-                    writer.Write(pathBytes);
-                    for (int i = 0; i < padding; i++) writer.Write((byte)0);
-
-                    continueWriteIndex[entry] = writeStream.Position;
-                    writer.Write((ulong)0); // Offset placeholder
-                    writer.Write(entry.Size);
-                    writer.Write(entry.Md5); // Placeholder
+                    bool useRelativeOffset = (Flags & Constants.PckFileRelativeBase) != 0 || FormatVersion >= 3;
 
                     if (FormatVersion >= 2)
                     {
-                        writer.Write(entry.Flags);
-                    }
-                }
+                        uint flags = Flags;
+                        if (useRelativeOffset)
+                        {
+                            flags |= Constants.PckFileRelativeBase;
+                        }
 
-                PadToAlignment(writeStream, writer);
+                        writer.Write(flags);
 
-                long filesStart = writeStream.Position;
+                        baseOffsetLocation = writeStream.Position;
+                        writer.Write(0UL);
 
-                if (FormatVersion >= 2)
-                {
-                    writeStream.Seek(baseOffsetLocation, SeekOrigin.Begin);
-                    writer.Write((ulong)filesStart);
-                    writeStream.Seek(filesStart, SeekOrigin.Begin);
-                }
-
-                foreach (var entry in Contents.Values)
-                {
-                    PadToAlignment(writeStream, writer);
-
-                    ulong offset = (ulong)writeStream.Position;
-                    byte[] data = entry.GetData?.Invoke() ?? [];
-
-                    if ((ulong)data.Length != entry.Size)
-                    {
-                        Console.WriteLine(
-                            "ERROR: file entry data source returned different amount of data than the entry said its size is");
-                        return false;
+                        if (FormatVersion >= 3)
+                        {
+                            directoryOffsetLocation = writeStream.Position;
+                            writer.Write(0UL);
+                        }
                     }
 
-                    writer.Write(data);
-
-                    entry.Md5 = MD5.HashData(data);
-
-                    if (FormatVersion < 2)
+                    // Reserved
+                    if (FormatVersion >= 4 && (Flags & Constants.PckFileSparseBundle) != 0 &&
+                        (Flags & Constants.PackDirEncrypted) != 0 && Salt.Length == 32)
                     {
-                        entry.Offset = offset;
+                        writer.Write(Encoding.UTF8.GetBytes(Salt));
+                        for (int i = 0; i < 8; i++)
+                            writer.Write(0U);
                     }
                     else
                     {
-                        entry.Offset = offset - (ulong)filesStart;
+                        for (int i = 0; i < 16; i++)
+                            writer.Write(0U);
                     }
-                }
 
-                foreach (var entry in Contents.Values)
-                {
-                    writeStream.Seek(continueWriteIndex[entry], SeekOrigin.Begin);
-                    writer.Write(entry.Offset);
-                    writer.Write(entry.Size);
-                    writer.Write(entry.Md5);
+                    long remember = writeStream.Position;
+
+                    if (FormatVersion >= 3)
+                    {
+                        writeStream.Seek(directoryOffsetLocation, SeekOrigin.Begin);
+                        writer.Write((ulong)remember);
+                        writeStream.Seek(remember, SeekOrigin.Begin);
+                    }
+
+                    writer.Write((uint)Contents.Count);
+
+                    Dictionary<ContainedFile, long> continueWriteIndex = [];
+
+                    foreach (var entry in Contents.Values)
+                    {
+                        byte[] pathBytes = Encoding.UTF8.GetBytes(entry.Path);
+                        int pathToWriteSize = pathBytes.Length +
+                            (PadPathsToMultipleWithNulls -
+                                pathBytes.Length % PadPathsToMultipleWithNulls);
+                        int padding = pathToWriteSize - pathBytes.Length;
+
+                        writer.Write((uint)pathToWriteSize);
+                        writer.Write(pathBytes);
+                        for (int i = 0; i < padding; i++)
+                            writer.Write((byte)0);
+
+                        continueWriteIndex[entry] = writeStream.Position;
+                        writer.Write(0UL); // Offset placeholder
+                        writer.Write(entry.Size);
+                        writer.Write(entry.Md5); // Placeholder
+
+                        if (FormatVersion >= 2)
+                        {
+                            writer.Write(entry.Flags);
+                        }
+                    }
+
+                    PadToAlignment(writeStream, writer);
+
+                    long filesStart = writeStream.Position;
+
+                    if (FormatVersion >= 2)
+                    {
+                        writeStream.Seek(baseOffsetLocation, SeekOrigin.Begin);
+                        writer.Write((ulong)filesStart);
+                        writeStream.Seek(filesStart, SeekOrigin.Begin);
+                    }
+
+                    foreach (var entry in Contents.Values)
+                    {
+                        PadToAlignment(writeStream, writer);
+
+                        ulong offset = (ulong)writeStream.Position;
+                        byte[] data = entry.GetData?.Invoke() ?? [];
+
+                        if ((ulong)data.Length != entry.Size)
+                        {
+                            Console.WriteLine(
+                                "ERROR: file entry data source returned different amount of data than the entry said its size is");
+                            return false;
+                        }
+
+                        writer.Write(data);
+
+                        entry.Md5 = MD5.HashData(data);
+
+                        if (FormatVersion < 2)
+                        {
+                            entry.Offset = offset;
+                        }
+                        else
+                        {
+                            entry.Offset = offset - (ulong)filesStart;
+                        }
+                    }
+
+                    foreach (var entry in Contents.Values)
+                    {
+                        writeStream.Seek(continueWriteIndex[entry], SeekOrigin.Begin);
+                        writer.Write(entry.Offset);
+                        writer.Write(entry.Size);
+                        writer.Write(entry.Md5);
+                    }
                 }
             }
 
-            _reader?.Dispose();
-            _reader = null;
-            _readStream?.Dispose();
-            _readStream = null;
+            reader?.Dispose();
+            reader = null;
+            readStream?.Dispose();
+            readStream = null;
 
             if (File.Exists(Path))
             {
@@ -378,7 +385,6 @@ public class PckFile : IDisposable
             return false;
         }
     }
-
 
     public void AddFile(ContainedFile file)
     {
@@ -418,7 +424,7 @@ public class PckFile : IDisposable
             Path = pckPath,
             Offset = ulong.MaxValue,
             Size = (ulong)info.Length,
-            GetData = () => File.ReadAllBytes(filesystemPath)
+            GetData = () => File.ReadAllBytes(filesystemPath),
         };
 
         if (IncludeFilter != null && !IncludeFilter(file))
@@ -461,9 +467,9 @@ public class PckFile : IDisposable
         {
             foreach (var entry in Contents.Values)
             {
-                string processedPath = entry.Path.StartsWith(Constants.GodotResPath)
-                    ? entry.Path[Constants.GodotResPath.Length..]
-                    : entry.Path;
+                string processedPath = entry.Path.StartsWith(Constants.GodotResPath) ?
+                    entry.Path[Constants.GodotResPath.Length..] :
+                    entry.Path;
 
                 while (processedPath.StartsWith('/'))
                 {
@@ -538,15 +544,26 @@ public class PckFile : IDisposable
 
     public void Dispose()
     {
-        _reader?.Dispose();
-        _readStream?.Dispose();
+        Dispose(true);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            reader?.Dispose();
+            readStream?.Dispose();
+        }
+
         GC.SuppressFinalize(this);
     }
 
     private void PadToAlignment(Stream stream, BinaryWriter writer)
     {
-        if (Alignment <= 0) return;
-        while ((stream.Position % Alignment) != 0)
+        if (Alignment <= 0)
+            return;
+
+        while (stream.Position % Alignment != 0)
         {
             writer.Write((byte)0);
         }

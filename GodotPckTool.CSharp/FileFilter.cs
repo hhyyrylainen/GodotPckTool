@@ -1,23 +1,23 @@
-using System.Text.RegularExpressions;
-
 namespace GodotPckTool;
+
+using System.Text.RegularExpressions;
 
 /// <summary>
 ///   Filtering options to use when adding or extracting files from a PCK file.
 /// </summary>
 public class FileFilter
 {
-    private ulong _minSizeLimit;
-    private ulong _maxSizeLimit = ulong.MaxValue;
-    private List<Regex> _includePatterns = [];
-    private List<Regex> _excludePatterns = [];
-    private List<Regex> _overridePatterns = [];
+    private ulong minSizeLimit;
+    private ulong maxSizeLimit = ulong.MaxValue;
+    private List<Regex> includePatterns = [];
+    private List<Regex> excludePatterns = [];
+    private List<Regex> overridePatterns = [];
 
     public bool Include(ContainedFile file)
     {
-        if (_overridePatterns.Count > 0)
+        if (overridePatterns.Count > 0)
         {
-            foreach (var pattern in _overridePatterns)
+            foreach (var pattern in overridePatterns)
             {
                 if (pattern.IsMatch(file.Path))
                 {
@@ -26,11 +26,11 @@ public class FileFilter
             }
         }
 
-        if (_includePatterns.Count > 0)
+        if (includePatterns.Count > 0)
         {
             bool matched = false;
 
-            foreach (var pattern in _includePatterns)
+            foreach (var pattern in includePatterns)
             {
                 if (pattern.IsMatch(file.Path))
                 {
@@ -43,15 +43,15 @@ public class FileFilter
                 return false;
         }
 
-        if (file.Size < _minSizeLimit)
+        if (file.Size < minSizeLimit)
             return false;
 
-        if (file.Size > _maxSizeLimit)
+        if (file.Size > maxSizeLimit)
             return false;
 
-        if (_excludePatterns.Count > 0)
+        if (excludePatterns.Count > 0)
         {
-            foreach (var pattern in _excludePatterns)
+            foreach (var pattern in excludePatterns)
             {
                 if (pattern.IsMatch(file.Path))
                     return false;
@@ -63,26 +63,26 @@ public class FileFilter
 
     public void SetSizeMinLimit(ulong size)
     {
-        _minSizeLimit = size;
+        minSizeLimit = size;
     }
 
     public void SetSizeMaxLimit(ulong size)
     {
-        _maxSizeLimit = size;
+        maxSizeLimit = size;
     }
 
     public void SetIncludeRegexes(IEnumerable<Regex> filters)
     {
-        _includePatterns = filters.ToList();
+        includePatterns = filters.ToList();
     }
 
     public void SetExcludeRegexes(IEnumerable<Regex> filters)
     {
-        _excludePatterns = filters.ToList();
+        excludePatterns = filters.ToList();
     }
 
     public void SetIncludeOverrideRegexes(IEnumerable<Regex> filters)
     {
-        _overridePatterns = filters.ToList();
+        overridePatterns = filters.ToList();
     }
 }

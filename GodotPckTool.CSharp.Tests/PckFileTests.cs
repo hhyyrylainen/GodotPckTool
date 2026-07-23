@@ -1,11 +1,16 @@
+namespace GodotPckTool.CSharp.Tests;
+
 using System.Text;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace GodotPckTool.CSharp.Tests;
-
-public class PckFileTests : IDisposable
+public sealed class PckFileTests : IDisposable
 {
+    /// <summary>
+    ///   Path to a real PCK file in the user's home folder for read test. If missing, it is just ignored.
+    /// </summary>
+    private const string RealTestPckFile = "Projects/Thrive/builds/Thrive_1.2.0.0-alpha_linux_x11/Thrive.pck";
+
     private readonly ITestOutputHelper _testOutputHelper;
     private readonly string _testDir;
     private readonly string _pckPath;
@@ -39,7 +44,7 @@ public class PckFileTests : IDisposable
             {
                 Path = "res://hello.txt",
                 Size = (ulong)fileData.Length,
-                GetData = () => fileData
+                GetData = () => fileData,
             };
             pck.AddFile(entry);
 
@@ -99,17 +104,16 @@ public class PckFileTests : IDisposable
     [Fact]
     public void TestReadRealPckFile()
     {
-        // This test reads the contents of a real PCK file that is assumed to exist at path 
-        // "~/Thrive/builds/Thrive_1.2.0.0-alpha_linux_x11"
+        // This test reads the contents of a real PCK file that is assumed to exist at path RealTestPckFile.
         // It can be skipped when the file doesn't exist as it is not going to be included in this repo.
 
         string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        string realPckPath = Path.Combine(home, "Projects/Thrive/builds/Thrive_1.2.0.0-alpha_linux_x11/Thrive.pck");
+        string realPckPath = Path.Combine(home, RealTestPckFile);
 
         if (!File.Exists(realPckPath))
         {
             // Skip test if file doesn't exist
-            _testOutputHelper.WriteLine($"Skipping test as PCKfile doesn't exist: {realPckPath}");
+            _testOutputHelper.WriteLine($"Skipping test as PCK file doesn't exist: {realPckPath}");
             return;
         }
 
