@@ -43,7 +43,7 @@ public class PckFile : IDisposable
         try
         {
             readStream = File.Open(Path, FileMode.Open, FileAccess.Read, FileShare.Read);
-            reader = new BinaryReader(readStream, Encoding.UTF8, leaveOpen: true);
+            reader = new BinaryReader(readStream, Encoding.UTF8, true);
 
             long pckStart = readStream.Position;
 
@@ -112,7 +112,7 @@ public class PckFile : IDisposable
             else
             {
                 // Reserved
-                for (int i = 0; i < 16; i++)
+                for (int i = 0; i < 16; ++i)
                 {
                     reader.ReadUInt32();
                 }
@@ -121,7 +121,7 @@ public class PckFile : IDisposable
             uint fileCount = reader.ReadUInt32();
             uint excluded = 0;
 
-            for (uint i = 0; i < fileCount; i++)
+            for (uint i = 0; i < fileCount; ++i)
             {
                 uint pathLength = reader.ReadUInt32();
                 byte[] pathBytes = reader.ReadBytes((int)pathLength);
@@ -142,8 +142,8 @@ public class PckFile : IDisposable
 
                     if ((entry.Flags & Constants.PckFileEncrypted) != 0)
                     {
-                        Console.WriteLine(
-                            $"WARNING: pck file ({entry.Path}) is marked as encrypted, decoding the encryption is not implemented");
+                        Console.WriteLine($"WARNING: pck file ({entry.Path}) is marked as encrypted, " +
+                            "decoding the encryption is not implemented");
                     }
 
                     if ((entry.Flags & Constants.PckFileDeleted) != 0)
@@ -156,7 +156,7 @@ public class PckFile : IDisposable
 
                 if (IncludeFilter != null && !IncludeFilter(entry))
                 {
-                    excluded++;
+                    ++excluded;
                     continue;
                 }
 
@@ -203,7 +203,8 @@ public class PckFile : IDisposable
             if ((ulong)read != size)
             {
                 throw new Exception(
-                    "reading file entry content failed (specified offset or data length is too large, pck may be corrupt or malformed)");
+                    "reading file entry content failed (specified offset or data length is too large, " +
+                    "pck may be corrupt or malformed)");
             }
 
             return data;
@@ -224,7 +225,7 @@ public class PckFile : IDisposable
         {
             using (var writeStream = File.Open(tmpWrite, FileMode.Create, FileAccess.Write, FileShare.None))
             {
-                using (var writer = new BinaryWriter(writeStream, Encoding.UTF8, leaveOpen: false))
+                using (var writer = new BinaryWriter(writeStream, Encoding.UTF8, false))
                 {
                     if (FormatVersion >= 2 && Alignment < 1)
                     {
@@ -270,12 +271,12 @@ public class PckFile : IDisposable
                         (Flags & Constants.PackDirEncrypted) != 0 && Salt.Length == 32)
                     {
                         writer.Write(Encoding.UTF8.GetBytes(Salt));
-                        for (int i = 0; i < 8; i++)
+                        for (int i = 0; i < 8; ++i)
                             writer.Write(0U);
                     }
                     else
                     {
-                        for (int i = 0; i < 16; i++)
+                        for (int i = 0; i < 16; ++i)
                             writer.Write(0U);
                     }
 
@@ -302,7 +303,7 @@ public class PckFile : IDisposable
 
                         writer.Write((uint)pathToWriteSize);
                         writer.Write(pathBytes);
-                        for (int i = 0; i < padding; i++)
+                        for (int i = 0; i < padding; ++i)
                             writer.Write((byte)0);
 
                         continueWriteIndex[entry] = writeStream.Position;
@@ -336,8 +337,8 @@ public class PckFile : IDisposable
 
                         if ((ulong)data.Length != entry.Size)
                         {
-                            Console.WriteLine(
-                                "ERROR: file entry data source returned different amount of data than the entry said its size is");
+                            Console.WriteLine("ERROR: file entry data source returned different amount of data " +
+                                "than the entry said its size is");
                             return false;
                         }
 

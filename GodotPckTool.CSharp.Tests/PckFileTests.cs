@@ -1,4 +1,4 @@
-namespace GodotPckTool.CSharp.Tests;
+﻿namespace GodotPckTool.CSharp.Tests;
 
 using System.Text;
 using Xunit;
@@ -21,14 +21,6 @@ public sealed class PckFileTests : IDisposable
         testDir = Path.Combine(Path.GetTempPath(), "GodotPckToolTests_" + Guid.NewGuid());
         Directory.CreateDirectory(testDir);
         pckPath = Path.Combine(testDir, "test.pck");
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(testDir))
-        {
-            Directory.Delete(testDir, true);
-        }
     }
 
     [Fact]
@@ -126,5 +118,13 @@ public sealed class PckFileTests : IDisposable
         testOutputHelper.WriteLine(
             $"Godot Version: {pck.MajorGodotVersion}.{pck.MinorGodotVersion}.{pck.PatchGodotVersion}");
         testOutputHelper.WriteLine($"File count: {pck.Contents.Count}");
+    }
+
+    public void Dispose()
+    {
+        if (Directory.Exists(testDir))
+        {
+            Directory.Delete(testDir, true);
+        }
     }
 }
