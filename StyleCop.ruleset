@@ -61,6 +61,7 @@
     <Rule Id="CA2138" Action="Warning" />
     <Rule Id="CA2140" Action="Warning" />
     <Rule Id="CA2141" Action="Warning" />
+    <Rule Id="CA2141" Action="None" /> <!-- Causes conflict with JetBrains -->
     <Rule Id="CA2146" Action="Warning" />
     <Rule Id="CA2147" Action="Warning" />
     <Rule Id="CA2149" Action="Warning" />
