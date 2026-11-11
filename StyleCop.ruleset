@@ -61,7 +61,6 @@
     <Rule Id="CA2138" Action="Warning" />
     <Rule Id="CA2140" Action="Warning" />
     <Rule Id="CA2141" Action="Warning" />
-    <Rule Id="CA2141" Action="None" /> <!-- Causes conflict with JetBrains -->
     <Rule Id="CA2146" Action="Warning" />
     <Rule Id="CA2147" Action="Warning" />
     <Rule Id="CA2149" Action="Warning" />
@@ -120,6 +119,7 @@
     <Rule Id="SA1137" Action="Warning" /> <!-- Elements should have the same indentation -->
     <Rule Id="SA1141" Action="Warning" /> <!-- Use tuple syntax -->
     <Rule Id="SA1142" Action="Warning" /> <!-- Refer to tuple elements by name -->
+    <Rule Id="SA1143" Action="None" /> <!-- Causes conflict with JetBrains -->
     <Rule Id="SA1200" Action="Warning" /> <!-- Usings should be in a namespace -->
     <Rule Id="SA1201" Action="Warning" /> <!-- Elements should appear in the correct order -->
     <Rule Id="SA1214" Action="Warning" /> <!-- Readonly fields should appear before non-readonly fields -->
