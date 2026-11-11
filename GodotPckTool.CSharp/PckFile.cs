@@ -1,5 +1,6 @@
 namespace GodotPckTool;
 
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -511,7 +512,7 @@ public class PckFile : IDisposable
 
             if (printHashes)
             {
-                Console.Write($" md5: {Convert.ToHexString(entry.Md5).ToLower()}");
+                Console.Write($" md5: {Convert.ToHexString(entry.Md5).ToLower(CultureInfo.InvariantCulture)}");
             }
 
             Console.WriteLine();
